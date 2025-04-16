@@ -152,6 +152,10 @@ function MainPage() {
     }
   };
 
+  const handleGoToHome = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="MainPage">
       <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
@@ -210,6 +214,9 @@ function MainPage() {
               </button>
               <button onClick={handleBreakup}>
                 <span role="img" aria-label="disconnect">💔</span> Disconnect
+              </button>
+              <button onClick={handleGoToHome} className="go-home-button">
+                <span role="img" aria-label="home">🏠</span> Visit Home
               </button>
             </div>
           </>
