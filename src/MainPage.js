@@ -82,19 +82,38 @@ function MainPage() {
     if (!partner) return;
 
     try {
-      // Update both users to remove the partner field
-      const batch = writeBatch(db);
-      const userDocRef = doc(db, 'users', user.uid);
-      const partnerDocRef = doc(db, 'users', partnerCode);
+      // Ensure partnerCode is set to the correct partner document ID
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (!userData.partner) {
+          alert('No partner to disconnect.');
+          return;
+        }
 
-      batch.update(userDocRef, { partner: deleteField() });
-      batch.update(partnerDocRef, { partner: deleteField() });
+        const partnerDocRef = doc(db, 'users', userData.partner);
+        const partnerDoc = await getDoc(partnerDocRef);
 
-      await batch.commit();
+        if (!partnerDoc.exists()) {
+          alert('Partner document does not exist.');
+          return;
+        }
 
-      setPartner(null);
-      setPartnerCode('');
-      alert('You have disconnected from your partner.');
+        // Update both users to remove the partner field
+        const batch = writeBatch(db);
+        const userDocRef = doc(db, 'users', user.uid);
+
+        batch.update(userDocRef, { partner: deleteField() });
+        batch.update(partnerDocRef, { partner: deleteField() });
+
+        await batch.commit();
+
+        setPartner(null);
+        setPartnerCode('');
+        alert('You have disconnected from your partner.');
+      } else {
+        alert('User document does not exist.');
+      }
     } catch (error) {
       console.error('Error during breakup:', error);
       alert('Failed to disconnect. Please try again.');
@@ -135,38 +154,71 @@ function MainPage() {
 
   return (
     <div className="MainPage">
-      <h1>Welcome to the Main Page</h1>
+      <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
+      
       {user && (
-        <div className="user-details">
-          <img src={user.photoURL || defaultProfile} alt="Profile" className="user-profile" />
-          <p><strong>Name:</strong> {user.displayName}</p>
-          <p><strong>Your Code:</strong> {userCode}</p>
-          <button onClick={handleCopyCode}>Copy Code</button>
-          <button onClick={handleShareCode}>Share Code</button>
+        <div className={`user-details ${partner ? 'connected' : ''}`}>
+          <img 
+            src={user.photoURL || defaultProfile} 
+            alt="Profile" 
+            className="user-profile"
+            onError={(e) => e.target.src = defaultProfile}
+          />
+          <p><strong>{user.displayName}</strong></p>
+          <p className="code-display">
+            <strong>Your Code:</strong> 
+            <span>{userCode}</span>
+          </p>
+          <div className="button-group">
+            <button onClick={handleCopyCode}>
+              <span role="img" aria-label="copy">📋</span> Copy Code
+            </button>
+            <button onClick={handleShareCode}>
+              <span role="img" aria-label="share">💌</span> Share Code
+            </button>
+          </div>
         </div>
       )}
 
-      <>
+      <div className={partner ? 'partner-details' : 'partner-section'}>
         {!partner ? (
-          <div className="partner-section">
+          <>
+            <h2>Connect with Someone</h2>
             <input
               type="text"
               placeholder="Enter partner code"
               value={partnerCode}
               onChange={(e) => setPartnerCode(e.target.value)}
             />
-            <button onClick={handleSetPartner}>Connect</button>
-          </div>
+            <button onClick={handleSetPartner}>
+              <span role="img" aria-label="connect">🤝</span> Connect
+            </button>
+          </>
         ) : (
-          <div className="partner-details">
-            <h2>Partner Details</h2>
-            <p><strong>Name:</strong> {partner.name}</p>
-            <button onClick={handlePoke}>Poke</button>
-            <button onClick={handleBreakup}>Breakup</button>
-          </div>
+          <>
+            <h2>Connected Partner</h2>
+            <img 
+              src={partner.profilePicture || defaultProfile} 
+              alt="Partner Profile" 
+              className="user-profile"
+              onError={(e) => e.target.src = defaultProfile}
+            />
+            <p><strong>{partner.name}</strong></p>
+            <div className="button-group">
+              <button onClick={handlePoke}>
+                <span role="img" aria-label="poke">👋</span> Poke
+              </button>
+              <button onClick={handleBreakup}>
+                <span role="img" aria-label="disconnect">💔</span> Disconnect
+              </button>
+            </div>
+          </>
         )}
-      </>
-      <button className="logout-button" onClick={handleLogout}>Logout</button>
+      </div>
+
+      <button className="logout-button" onClick={handleLogout}>
+        <span role="img" aria-label="logout">🚪</span> Logout
+      </button>
     </div>
   );
 }
