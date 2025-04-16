@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import { auth, db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot } from 'firebase/firestore';
 import defaultProfile from './logo.svg';
 
 function MainPage() {
@@ -13,37 +13,59 @@ function MainPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setUserCode(data.code || '');
-          if (data.partner) {
-            const partnerDoc = await getDoc(doc(db, 'users', data.partner));
-            if (partnerDoc.exists()) {
-              setPartner(partnerDoc.data());
+        const userDocRef = doc(db, 'users', user.uid);
+
+        // Set up a real-time listener for the user's document
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const data = docSnapshot.data();
+            setUserCode(data.code || '');
+
+            if (data.partner) {
+              const fetchPartnerData = async () => {
+                const partnerDoc = await getDoc(doc(db, 'users', data.partner));
+                if (partnerDoc.exists()) {
+                  setPartner(partnerDoc.data());
+                } else {
+                  setPartner(null); // Partner document no longer exists
+                }
+              };
+              fetchPartnerData();
+            } else {
+              setPartner(null); // No partner assigned
             }
           }
-        }
+        });
+
+        return () => unsubscribe(); // Clean up the listener on unmount
       }
     };
+
     fetchUserData();
   }, [user]);
 
-  const handleSetPartner = async () => {
+  const handleSetPartner = async (event) => {
+    event.preventDefault(); // Prevent page reload
     if (!partnerCode) return alert('Please enter a partner code.');
     if (partner) return alert('You are already connected to a partner.');
 
     try {
-      const partnerDoc = await getDoc(doc(db, 'users', partnerCode));
-      if (partnerDoc.exists()) {
+      // Query Firestore to find a user with the entered partner code
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('code', '==', partnerCode));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const partnerDoc = querySnapshot.docs[0];
         const partnerData = partnerDoc.data();
+
         if (partnerData.partner) {
           return alert('The entered code is already connected to another user.');
         }
 
         // Update both users to set them as partners
-        await updateDoc(doc(db, 'users', user.uid), { partner: partnerCode });
-        await updateDoc(doc(db, 'users', partnerCode), { partner: user.uid });
+        await updateDoc(doc(db, 'users', user.uid), { partner: partnerDoc.id });
+        await updateDoc(doc(db, 'users', partnerDoc.id), { partner: user.uid });
 
         setPartner(partnerData);
         alert('You are now connected to your partner!');
@@ -78,13 +100,29 @@ function MainPage() {
     }
   };
 
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(userCode);
+    alert('Code copied to clipboard!');
+  };
+
+  const handleShareCode = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'My Partner Code',
+        text: `Here is my partner code: ${userCode}`,
+      }).catch((error) => console.error('Error sharing code:', error));
+    } else {
+      alert('Sharing is not supported on this device.');
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await auth.signOut();
       window.location.reload(); // Reload to go back to SplashScreen
     } catch (error) {
       console.error('Error during logout:', error);
-      alert('Failed to logout. Please try again.');
+      alert('Failed to log out. Please try again.');
     }
   };
 
@@ -96,27 +134,31 @@ function MainPage() {
           <img src={user.photoURL || defaultProfile} alt="Profile" className="user-profile" />
           <p><strong>Name:</strong> {user.displayName}</p>
           <p><strong>Your Code:</strong> {userCode}</p>
+          <button onClick={handleCopyCode}>Copy Code</button>
+          <button onClick={handleShareCode}>Share Code</button>
         </div>
       )}
 
-      {!partner ? (
-        <div className="partner-section">
-          <input
-            type="text"
-            placeholder="Enter partner code"
-            value={partnerCode}
-            onChange={(e) => setPartnerCode(e.target.value)}
-          />
-          <button onClick={handleSetPartner}>Connect</button>
-        </div>
-      ) : (
-        <div className="partner-details">
-          <h2>Partner Details</h2>
-          <p><strong>Name:</strong> {partner.name}</p>
-          <button onClick={handlePoke}>Poke</button>
-          <button onClick={handleBreakup}>Breakup</button>
-        </div>
-      )}
+      <>
+        {!partner ? (
+          <div className="partner-section">
+            <input
+              type="text"
+              placeholder="Enter partner code"
+              value={partnerCode}
+              onChange={(e) => setPartnerCode(e.target.value)}
+            />
+            <button onClick={handleSetPartner}>Connect</button>
+          </div>
+        ) : (
+          <div className="partner-details">
+            <h2>Partner Details</h2>
+            <p><strong>Name:</strong> {partner.name}</p>
+            <button onClick={handlePoke}>Poke</button>
+            <button onClick={handleBreakup}>Breakup</button>
+          </div>
+        )}
+      </>
       <button className="logout-button" onClick={handleLogout}>Logout</button>
     </div>
   );
