@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import { auth, db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot, writeBatch } from 'firebase/firestore';
 import defaultProfile from './logo.svg';
 
 function MainPage() {
@@ -82,8 +82,15 @@ function MainPage() {
     if (!partner) return;
 
     try {
-      await updateDoc(doc(db, 'users', user.uid), { partner: deleteField() });
-      await updateDoc(doc(db, 'users', partnerCode), { partner: deleteField() });
+      // Update both users to remove the partner field
+      const batch = writeBatch(db);
+      const userDocRef = doc(db, 'users', user.uid);
+      const partnerDocRef = doc(db, 'users', partnerCode);
+
+      batch.update(userDocRef, { partner: deleteField() });
+      batch.update(partnerDocRef, { partner: deleteField() });
+
+      await batch.commit();
 
       setPartner(null);
       setPartnerCode('');
