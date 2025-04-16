@@ -1,0 +1,193 @@
+/* Styles for the LoginPage */
+.LoginPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+.login-container {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: clamp(16px, 4vw, 24px);
+  padding: clamp(24px, 5vw, 40px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: min(90%, 400px);
+  margin: auto;
+  transform: translateZ(0);
+  transition: transform 0.3s ease;
+  animation: containerFade 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.login-container:hover {
+  transform: translateZ(0) scale(1.01);
+}
+
+.LoginPage-logo {
+  width: min(120px, 30vw);
+  height: auto;
+  margin-bottom: clamp(16px, 4vw, 24px);
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  animation: slideIn 0.6s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.LoginPage h1 {
+  color: white;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  margin: 0 0 clamp(8px, 2vw, 12px) 0;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  line-height: 1.2;
+  animation: slideIn 0.6s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+.LoginPage form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+.LoginPage label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.LoginPage input {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.LoginPage button {
+  padding: 10px;
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.LoginPage button:hover {
+  background-color: #0056b3;
+}
+
+.LoginPage p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  margin: 0 0 clamp(24px, 6vw, 32px) 0;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  animation: slideIn 0.6s ease-out 0.9s forwards;
+  opacity: 0;
+}
+
+.google-login-button {
+  background: white;
+  color: #333;
+  padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 28px);
+  border-radius: 50px;
+  border: none;
+  font-size: clamp(14px, 4vw, 16px);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  animation: slideIn 0.6s ease-out 1.2s forwards;
+  opacity: 0;
+}
+
+.google-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: #f8f9fa;
+}
+
+.google-login-button:active {
+  transform: translateY(0);
+}
+
+.google-login-button img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* Add media queries for better responsiveness */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 20px;
+  }
+  
+  .google-login-button {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}
+
+/* Add support for dark mode */
+@media (prefers-color-scheme: dark) {
+  .google-login-button {
+    background: #f8f9fa;
+  }
+  
+  .login-container {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes containerFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
