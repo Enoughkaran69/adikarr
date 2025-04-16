@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './LoginPage.css';
 import { auth, provider, signInWithPopup } from './firebase';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
 const db = getFirestore();
 
@@ -12,16 +13,19 @@ function LoginPage({ onLoginSuccess }) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      // Generate a unique code for the user
+      const userCode = uuidv4().slice(0, 8); // Shorten UUID to 8 characters
+
       // Save user details to Firestore
       await setDoc(doc(db, 'users', user.uid), {
         name: user.displayName,
         email: user.email,
         uid: user.uid,
         profilePicture: user.photoURL,
+        code: userCode, // Save the generated code
       });
 
       console.log('User Info:', user);
-      alert(`Welcome ${user.displayName}!`);
 
       // Notify parent component about login success
       onLoginSuccess();
