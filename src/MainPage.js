@@ -145,7 +145,9 @@ function MainPage() {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      window.location.reload(); // Reload to go back to SplashScreen
+      if (onLogout) {
+        onLogout();
+      }
     } catch (error) {
       console.error('Error during logout:', error);
       alert('Failed to log out. Please try again.');

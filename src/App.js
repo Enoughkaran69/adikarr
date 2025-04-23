@@ -16,11 +16,15 @@ function App() {
     setCurrentPage('main');
   };
 
+  const handleLogout = () => {
+    setCurrentPage('login');
+  };
+
   return (
     <div className="App">
       {currentPage === 'splash' && <SplashScreen onLoginCheck={handleLoginCheck} />}
       {currentPage === 'login' && <LoginPage onLoginSuccess={handleLoginSuccess} />}
-      {currentPage === 'main' && <MainPage />}
+      {currentPage === 'main' && <MainPage onLogout={handleLogout} />}
       {currentPage === 'home' && <HomePage />}
     </div>
   );

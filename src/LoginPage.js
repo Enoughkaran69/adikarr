@@ -17,7 +17,6 @@ function LoginPage({ onLoginSuccess }) {
     setError(null);
     
     try {
-      await setPersistence(auth, browserLocalPersistence);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
