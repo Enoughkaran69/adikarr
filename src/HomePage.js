@@ -239,6 +239,7 @@ function HomePage() {
             src={user?.photoURL || defaultProfile} 
             alt="Your Profile" 
             className="profile-image"
+            onError={(e) => e.target.src = defaultProfile}
           />
           <h2>{user?.displayName}</h2>
         </div>
@@ -252,6 +253,7 @@ function HomePage() {
             src={partner?.profilePicture || defaultProfile} 
             alt="Partner Profile" 
             className="profile-image"
+            onError={(e) => e.target.src = defaultProfile}
           />
           <h2>{partner?.name}</h2>
         </div>

@@ -158,75 +158,104 @@ function MainPage() {
 
   return (
     <div className="MainPage">
-      <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
       
-      {user && (
-        <div className={`user-details ${partner ? 'connected' : ''}`}>
-          <img 
-            src={user.photoURL || defaultProfile} 
-            alt="Profile" 
-            className="user-profile"
-            onError={(e) => e.target.src = defaultProfile}
-          />
-          <p><strong>{user.displayName}</strong></p>
-          <p className="code-display">
-            <strong>Your Code:</strong> 
-            <span>{userCode}</span>
-          </p>
-          <div className="button-group">
-            <button onClick={handleCopyCode}>
-              <span role="img" aria-label="copy">📋</span> Copy Code
-            </button>
-            <button onClick={handleShareCode}>
-              <span role="img" aria-label="share">💌</span> Share Code
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className={partner ? 'partner-details' : 'partner-section'}>
-        {!partner ? (
-          <>
-            <h2>Connect with Someone</h2>
-            <input
-              type="text"
-              placeholder="Enter partner code"
-              value={partnerCode}
-              onChange={(e) => setPartnerCode(e.target.value)}
-            />
-            <button onClick={handleSetPartner}>
-              <span role="img" aria-label="connect">🤝</span> Connect
-            </button>
-          </>
-        ) : (
-          <>
-            <h2>Connected Partner</h2>
-            <img 
-              src={partner.profilePicture || defaultProfile} 
-              alt="Partner Profile" 
-              className="user-profile"
-              onError={(e) => e.target.src = defaultProfile}
-            />
-            <p><strong>{partner.name}</strong></p>
-            <div className="button-group">
-              <button onClick={handlePoke}>
-                <span role="img" aria-label="poke">👋</span> Poke
-              </button>
-              <button onClick={handleBreakup}>
-                <span role="img" aria-label="disconnect">💔</span> Disconnect
-              </button>
-              <button onClick={handleGoToHome} className="go-home-button">
-                <span role="img" aria-label="home">🏠</span> Visit Home
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      <button className="logout-button" onClick={handleLogout}>
-        <span role="img" aria-label="logout">🚪</span> Logout
-      </button>
+      <div className ="heading">
+      <div>
+      <div className="heading-title">ADI KAR</div>
+      <div className="sub-title">CONNECTING COUPLES</div>
     </div>
+    <button className="btn" onClick={handleLogout}>LOG OUT </button>
+  </div>
+
+        <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
+        <div className="contents">
+        <div className="user-details">
+      
+       
+          
+        
+        {user && (
+          
+            <div className={` ${partner ? 'connected' : ''}`}>
+              <div className="user-proc">
+                <img 
+                    src={user && user.photoURL ? user.photoURL : defaultProfile} 
+                    alt="Profile" 
+                    className="user-profile"
+                    onError={(e) => e.target.src = defaultProfile}
+                />
+                <div className="user-info">
+                    <p1>{user?.displayName}</p1>
+                </div>
+                </div>
+                <div className="code-section">
+                    <div className="code-display">
+                        <strong>Your Code:</strong> 
+                        <span>{userCode}</span>
+                    </div>
+                    <div className="code-actions">
+                        <button onClick={handleCopyCode} title="Copy to clipboard">
+                            <span role="img" aria-label="copy">📋</span>
+                        </button>
+                        <button onClick={handleShareCode} title="Share code">
+                            <span role="img" aria-label="share">📤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {partner && (
+            <div className="partner-details">
+                <div className="partner-header">
+                    <h2>Connected with</h2>
+                    <div className="partner-profile-section">
+                        <img 
+                            src={partner && partner.profilePicture ? partner.profilePicture : defaultProfile} 
+                            alt="Partner Profile" 
+                            className="user-profile"
+                            onError={(e) => e.target.src = defaultProfile}
+                        />
+                        <h3>{partner?.name}</h3>
+                    </div>
+                </div>
+                <div className="button-group">
+                    <button onClick={handleBreakup} className="btn">
+                        <span role="img" aria-label="disconnect">💔</span> Disconnect
+                    </button>
+                    <button onClick={handleGoToHome} className="btn">
+                        <span role="img" aria-label="home">🏠</span> Visit Home
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {!partner && (
+            <div className="partner-section">
+                <h2>Connect with Partner</h2>
+                <div className="partner-box">
+                    <input
+                        type="text"
+                        placeholder="Enter partner code"
+                        value={partnerCode}
+                        tabIndex={0}
+                        onChange={(e) => {
+                          console.log('Partner code input changed:', e.target.value);
+                          setPartnerCode(e.target.value);
+                        }} // Ensure this updates the state
+                    />
+                    <button onClick={handleSetPartner} className="btn">
+                        <span role="img" aria-label="connect">🤝</span> Connect
+                    </button>
+                </div>
+             
+            </div>
+        )}
+
+
+    </div>
+     </div>
+     </div>
   );
 }
 

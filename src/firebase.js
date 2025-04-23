@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup as firebaseSignInWithPopup } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup as firebaseSignInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -18,4 +18,4 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore();
 
-export { auth, provider, firebaseSignInWithPopup as signInWithPopup, db };
+export { auth, provider, firebaseSignInWithPopup as signInWithPopup, db, setPersistence, browserLocalPersistence };
