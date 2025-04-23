@@ -5,15 +5,15 @@ import { auth, db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import heartIcon from './logo.png';
 import { CircularProgress, Typography, Box } from '@mui/material';
+import { onAuthStateChanged } from 'firebase/auth';
 
 function SplashScreen({ onLoginCheck }) {
   const [transition, setTransition] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-      setIsLoading(true);
-      const user = auth.currentUser;
+    setIsLoading(true);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -35,14 +35,16 @@ function SplashScreen({ onLoginCheck }) {
         onLoginCheck('login');
       }
       setIsLoading(false);
-    };
+    });
 
     const timeout = setTimeout(() => {
       setTransition(true);
-      checkUser();
     }, 3000);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, [onLoginCheck]);
 
   return (
