@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import { auth, db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot, writeBatch } from 'firebase/firestore';
-import defaultProfile from './logo.svg';
+import defaultProfile from './logo.png';
 
 function MainPage() {
   const user = auth.currentUser;

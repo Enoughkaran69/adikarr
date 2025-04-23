@@ -75,6 +75,7 @@
   margin: 5px;
   cursor: pointer;
   font-weight: bold;
+  max-width: 200px;
 }
 .contents {
   display: flex;
@@ -437,11 +438,7 @@ button span[role="img"] {
     gap: 1rem;
   }
 
-  button {
-    width: 100%;
-    justify-content: center;
-    padding: 1rem;
-  }
+
 
   .user-profile {
     width: 100px;

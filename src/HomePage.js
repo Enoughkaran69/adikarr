@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './HomePage.css';
 import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
-import defaultProfile from './logo.svg';
+import defaultProfile from './logo.png';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
@@ -211,14 +211,12 @@ function HomePage() {
 
   return (
     <div className="HomePage">
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-        </div>
-      )}
-      <div className="header">
-        <h1>Connected with {partner?.name || 'Partner'}</h1>
-        <Tooltip title="Menu">
+            <div className ="heading">
+      <div>
+      <div className="heading-title">ADI KAR</div>
+      <div className="sub-title">CONNECTING COUPLES</div>
+    </div>
+    <Tooltip title="Menu">
           <IconButton className="menu-button" onClick={handleMenuOpen}>
             <MoreVertIcon />
           </IconButton>
@@ -231,10 +229,20 @@ function HomePage() {
           <MenuItem onClick={handleBreakup}>Disconnect</MenuItem>
           <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
+  </div>
+      {error && (
+        <div className="error-message">
+          <p>{error}</p>
+        </div>
+      )}
+      <div className="header">
+        
+       
+       
       </div>
 
       <div className="profile-container">
-        <div className="user-profile">
+        <div className="partner-profile">
           <img 
             src={user?.photoURL || defaultProfile} 
             alt="Your Profile" 
@@ -270,10 +278,7 @@ function HomePage() {
                   Distance: <strong>{distance}</strong>
                 </span>
               </div>
-              <div className="timestamp-info">
-                <AccessTimeIcon />
-                <span>Last updated: Just now</span>
-              </div>
+            
             </div>
           </div>
         </div>
