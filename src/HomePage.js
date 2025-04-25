@@ -502,7 +502,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
                 </button>
                 
                 {/* Removed Music button as thumbnail click navigates to music page */} 
-                {/* <button className="btn" onClick={() => onNavigateToMusicPage()}>Music</button> */} 
+                <button className="btn" onClick={() => onNavigateToMusicPage()}>Music</button> 
               </div>
               </div>
 
