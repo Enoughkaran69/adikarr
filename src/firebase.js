@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup as firebaseSignInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBmfK3MGYnAokhAxMF1hdeNDkfmiP6iHFo",
@@ -17,5 +18,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore();
+const messaging = getMessaging(app);
 
-export { auth, provider, firebaseSignInWithPopup as signInWithPopup, db, setPersistence, browserLocalPersistence };
+export { auth, provider, firebaseSignInWithPopup as signInWithPopup, db, setPersistence, browserLocalPersistence, messaging, getToken, onMessage };

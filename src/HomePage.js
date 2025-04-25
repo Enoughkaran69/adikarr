@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './HomePage.css';
 import { auth, db } from './firebase';
-import { doc, getDoc, updateDoc, writeBatch, deleteField } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, writeBatch, deleteField, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import defaultProfile from './logo.png';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import L from 'leaflet';
@@ -23,7 +25,71 @@ const createCustomIcon = (color) => new L.Icon({
 const userIcon = createCustomIcon('%23FF4081');
 const partnerIcon = createCustomIcon('%234CAF50');
 
-function HomePage() {
+function CustomAudioPlayer({ src }) {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const togglePlayPause = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+  };
+
+  const onPlay = () => setIsPlaying(true);
+  const onPause = () => setIsPlaying(false);
+
+  const onTimeUpdate = () => {
+    if (!audioRef.current) return;
+    setProgress(audioRef.current.currentTime);
+  };
+
+  const onLoadedMetadata = () => {
+    if (!audioRef.current) return;
+    setDuration(audioRef.current.duration);
+  };
+
+  const onSeek = (e) => {
+    if (!audioRef.current) return;
+    const newTime = e.nativeEvent.offsetX / e.currentTarget.clientWidth * duration;
+    audioRef.current.currentTime = newTime;
+    setProgress(newTime);
+  };
+
+  const formatTime = (time) => {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  return (
+    <div className="custom-audio-player">
+      <button className="play-pause-button" onClick={togglePlayPause}>
+        {isPlaying ? '❚❚' : '▶'}
+      </button>
+      <div className="audio-progress" onClick={onSeek}>
+        <div className="audio-progress-filled" style={{ width: `${(progress / duration) * 100}%` }} />
+      </div>
+      <div className="audio-time">{formatTime(progress)} / {formatTime(duration)}</div>
+      <audio
+        ref={audioRef}
+        src={src}
+        onPlay={onPlay}
+        onPause={onPause}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        preload="metadata"
+      />
+    </div>
+  );
+}
+
+function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   const user = auth.currentUser;
   const [partner, setPartner] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -31,6 +97,77 @@ function HomePage() {
   const [distance, setDistance] = useState('Calculating...');
   const [error, setError] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [showMap, setShowMap] = useState(false);
+  const [partnerId, setPartnerId] = useState(null);
+  const [sharedSong, setSharedSong] = useState(null);
+  const [lastMessages, setLastMessages] = useState([]);
+  const [showChat, setShowChat] = useState(false);
+  // Fetch partnerId on mount or when user changes, independent of showMap
+  useEffect(() => {
+    const fetchPartnerId = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.partner) {
+            setPartnerId(userData.partner);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching partnerId:', error);
+      }
+    };
+    fetchPartnerId();
+  }, [user]);
+
+ 
+
+  // Set up sharedSong listener when partnerId changes, independent of showMap
+  useEffect(() => {
+    if (!partnerId) return;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const docId = [user.uid, partnerId].sort().join('_');
+    const sharedSongDocRef = doc(db, 'sharedSongs', docId);
+
+    const unsubscribe = onSnapshot(sharedSongDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const songData = docSnap.data();
+        setSharedSong(songData);
+      } else {
+        setSharedSong(null);
+      }
+    });
+
+    // Fetch last 2 chat messages
+    const messagesCollectionRef = collection(db, 'chats', docId, 'messages');
+    const messagesQuery = query(messagesCollectionRef, orderBy('createdAt', 'desc'), limit(2));
+    const unsubscribeMessages = onSnapshot(messagesQuery, (querySnapshot) => {
+      const msgs = [];
+      querySnapshot.forEach((doc) => {
+        msgs.push({ id: doc.id, ...doc.data() });
+      });
+      setLastMessages(msgs.reverse());
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeMessages();
+    };
+  }, [partnerId]);
+
+  // Handle Notify button click using Firestore for notification
+  const handleNotifyClick = async () => {
+    if (!partnerId) {
+      alert('No partner connected to notify.');
+      return;
+    }
+
+  };
 
   const handleMenuOpen = (event) => {
     setMenuAnchorEl(event.currentTarget);
@@ -109,7 +246,7 @@ function HomePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        if (user) {
+        if (user && showMap) {
           const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
 
@@ -153,6 +290,11 @@ function HomePage() {
           } else {
             setError('Failed to fetch user data.');
           }
+        } else {
+          // Clear error and location if showMap is false
+          setError(null);
+          setUserLocation(null);
+          setPartnerLocation(null);
         }
       } catch (firestoreError) {
         setError('An error occurred while fetching data. Please try again later.');
@@ -161,7 +303,7 @@ function HomePage() {
     };
 
     fetchUserData();
-  }, [user]);
+  }, [user , showMap]);
 
   useEffect(() => {
     if (userLocation && partnerLocation) {
@@ -209,6 +351,32 @@ function HomePage() {
     return null;
   }, [userLocation, partnerLocation]);
 
+  useEffect(() => {
+    if (!partnerId) return;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // Create a consistent doc ID for shared song between two users (sorted IDs)
+    const docId = [user.uid, partnerId].sort().join('_');
+    const sharedSongDocRef = doc(db, 'sharedSongs', docId);
+
+    // Listen for real-time updates on shared song
+    const unsubscribe = onSnapshot(sharedSongDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const songData = docSnap.data();
+        // alert(`Currently set song: ${songData.name} by ${songData.artist}`);
+        setSharedSong(songData);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [partnerId]);
+
+  if (showChat && partner) {
+    const ChatPage = require('./ChatPage').default;
+    return <ChatPage user={user} partner={partner} onBack={() => setShowChat(false)} />;
+  }
+
   return (
     <div className="HomePage">
             <div className ="heading">
@@ -235,11 +403,7 @@ function HomePage() {
           <p>{error}</p>
         </div>
       )}
-      <div className="header">
-        
-       
-       
-      </div>
+     
 
       <div className="profile-container">
         <div className="partner-profile">
@@ -267,7 +431,82 @@ function HomePage() {
         </div>
       </div>
 
-      {memoizedMap && (
+      <div className="shared-song-container">
+          {sharedSong && (
+          <div className="shared-song-display" role="region" aria-label="Shared Song">
+            <div className="shared-song-row">
+              {sharedSong.thumbnail && (
+                <img
+                  src={sharedSong.thumbnail}
+                  alt={`${sharedSong.name} thumbnail`}
+                  className="song-thumbnail-small"
+                  onClick={() => onNavigateToMusicPage()}
+                  style={{ cursor: 'pointer' }}
+                />
+              )}
+              <div className="song-info-row">
+                <div className="song-details-row">
+                  <p className="song-title"><strong>{sharedSong.name}</strong></p>
+                  <p className="song-artist">by {sharedSong.artist}</p>
+                </div>
+                {sharedSong.downloadUrl && (
+                  <CustomAudioPlayer src={sharedSong.downloadUrl} />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+     
+      <div className="other-item">
+            
+      <div className="switch-container">
+                Location<input 
+        type="checkbox" 
+        id="switch" 
+        checked={showMap} 
+        onChange={() => setShowMap(!showMap)} 
+      />
+      <label htmlFor="switch">Toggle</label>
+      </div>
+            
+      {/* Last 2 chat messages popup */}
+      {lastMessages.length > 0 && (
+        <div className="chat-popup" onClick={() => setShowChat(true)} role="button" tabIndex={0} onKeyPress={() => setShowChat(true)} aria-label="Open chat">
+          {lastMessages.map((msg) => {
+            const isSent = msg.senderId === user.uid;
+            const senderProfilePic = isSent ? user.photoURL : partner?.profilePicture;
+            const senderName = isSent ? (user.displayName || 'You') : (partner?.name || 'Partner');
+            return (
+              <div key={msg.id} className={`chat-popup-message ${isSent ? 'sent' : 'received'}`}>
+                <img
+                  src={senderProfilePic || './logo.png'}
+                  alt={`${senderName} profile`}
+                  className="chat-popup-message-icon"
+                  onError={(e) => { e.target.src = './logo.png'; }}
+                />
+                <span className="chat-popup-text">{msg.text}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      
+              {/* Added 4 buttons aligned */} 
+              <div className="button-group">
+              <button className="btn" onClick={onNavigateToEventPage}>
+                <span role="img" aria-label="events" className="btn-icon">📅</span> Events
+              </button>
+                <button className="btn" onClick={() => setShowChat(true)}>
+                  <span role="img" aria-label="chat" className="btn-icon">💬</span> Chat
+                </button>
+                
+                {/* Removed Music button as thumbnail click navigates to music page */} 
+                {/* <button className="btn" onClick={() => onNavigateToMusicPage()}>Music</button> */} 
+              </div>
+              </div>
+
+      {showMap && memoizedMap && (
         <div className="map-container">
           {memoizedMap}
           <div className="map-info">

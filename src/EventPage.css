@@ -1,0 +1,136 @@
+.EventPage {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-image: url('https://raw.githubusercontent.com/Enoughkaran69/test/refs/heads/main/download%20(3).jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.EventPage::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: -1;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.heading-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.sub-title {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.btn {
+  background-color: black;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 20px;
+  margin: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  max-width: 200px;
+}
+
+.event-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.event-form input[type="text"],
+.event-form input[type="date"] {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  flex: 1 1 200px;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.event-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px 20px;
+  border-radius: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.event-text {
+  font-size: 1.1rem;
+  flex: 2;
+  color: #fff;
+}
+
+.event-date {
+  font-size: 0.9rem;
+  color: #ccc;
+  flex: 1;
+  text-align: right;
+  margin-right: 15px;
+}
+
+.delete-btn {
+  background-color: rgba(239, 68, 68, 0.7);
+  border-color: rgba(239, 68, 68, 0.9);
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.9);
+}
+
+@media (max-width: 480px) {
+  .event-form {
+    flex-direction: column;
+  }
+
+  .event-form input[type="text"],
+  .event-form input[type="date"] {
+    flex: 1 1 100%;
+  }
+
+  .event-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .event-date {
+    text-align: left;
+    margin: 10px 0 0 0;
+  }
+}

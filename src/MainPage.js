@@ -4,7 +4,7 @@ import { auth, db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot, writeBatch } from 'firebase/firestore';
 import defaultProfile from './logo.png';
 
-function MainPage() {
+function MainPage({ onLogout }) {
   const user = auth.currentUser;
   const [partnerCode, setPartnerCode] = useState('');
   const [userCode, setUserCode] = useState('');
@@ -120,11 +120,7 @@ function MainPage() {
     }
   };
 
-  const handlePoke = () => {
-    if (partner) {
-      alert(`You poked ${partner.name}!`);
-    }
-  };
+
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(userCode);
@@ -172,6 +168,8 @@ function MainPage() {
         <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
         <div className="contents">
         <div className="user-details">
+
+       
       
        
           
