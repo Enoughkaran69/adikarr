@@ -1,295 +1,281 @@
+/* MusicPage.css */
+
+/* Apply basic box-sizing and font */
 .MusicPage {
-  min-height: 100vh;
-  padding: clamp(1rem, 5vw, 2rem);
-  position: relative;
-  color: white;
-  font-family: 'Poppins', sans-serif;
-  background-image: url('https://raw.githubusercontent.com/Enoughkaran69/test/refs/heads/main/download%20(3).jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff; /* Default text color for contrast against gradient */
+  padding: 15px;
+  padding-bottom: 120px; /* Add padding at the bottom to avoid overlap with sticky player */
+  min-height: 100vh; /* Ensure it takes full height */
+  position: relative; /* Needed for z-index stacking with background */
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
-.MusicPage::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: -1;
+/* Consistent Background Gradient */
+.background-container {
+  position: fixed; /* Cover the whole viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ff8a80 0%, #ea80fc 100%); /* Example Gradient - Adjust as needed */
+  z-index: -1; /* Place it behind the content */
+  opacity: 0.9; /* Slightly transparent */
 }
 
-.heading-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 1rem;
+/* Header Styling */
+.music-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.back-button-music {
+  color: #fff !important; /* Ensure icon is white */
+  margin-right: 10px;
+}
+
+.music-heading-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  flex-grow: 1; /* Take remaining space */
   text-align: center;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* Search Form Styling */
 .search-form {
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  margin-bottom: 25px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 25px; /* Rounded corners */
+  padding: 5px 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .search-input {
-  width: 300px;
-  max-width: 90vw;
-  padding: 8px;
-  border-radius: 20px;
+  flex-grow: 1;
+  padding: 10px 15px;
   border: none;
-  outline: none;
+  background-color: transparent; /* Transparent background */
+  color: #fff; /* White text */
   font-size: 1rem;
+  outline: none; /* Remove default outline */
 }
 
-.btn {
-  background-color: black;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
-  max-width: 200px;
-  transition: background-color 0.3s ease;
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
 }
 
-.menu-button {
-  background: var(--primary-color);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-  transition: var(--transition-standard);
+.search-button {
+  color: #fff !important; /* White icon */
+  margin-left: 5px;
 }
 
-.menu-button:hover {
-  background: var(--secondary-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-medium);
+/* Loading and Error/Info Text */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+.loading-container p {
+  margin-top: 10px;
 }
 
 .error-text {
-  color: #ff6b6b;
-  margin-bottom: 1rem;
+  color: #ffcdd2; /* Light red for errors */
+  background-color: rgba(211, 47, 47, 0.3);
+  padding: 10px;
+  border-radius: 5px;
   text-align: center;
+  margin: 15px 0;
 }
 
+.info-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 30px;
+  font-style: italic;
+}
+
+
+/* Song List Styling */
 .song-list {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
-  max-width: 600px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .song-item {
   display: flex;
   align-items: center;
-  margin: 10px 0;
+  background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white background */
+  border-radius: 8px;
+  margin-bottom: 12px;
   padding: 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  position: relative; /* For absolute positioning of indicator */
+  overflow: hidden; /* Contain the indicator */
 }
 
-.song-item:hover,
-.song-item:focus {
-  background: rgba(255, 255, 255, 0.2);
-  outline: none;
+.song-item:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.song-item.playing {
+  background-color: rgba(100, 221, 23, 0.3); /* Light green tint when playing */
+  box-shadow: 0 0 8px rgba(100, 221, 23, 0.5);
+}
+
+.song-item.shared {
+   border-left: 4px solid #ffeb3b; /* Yellow border for shared song */
 }
 
 .song-image {
   width: 50px;
   height: 50px;
-  object-fit: cover;
-  margin-right: 10px;
-  border-radius: 8px;
+  border-radius: 6px;
+  margin-right: 15px;
+  object-fit: cover; /* Ensure image covers the area */
+  cursor: pointer;
+  flex-shrink: 0; /* Prevent image from shrinking */
 }
 
 .song-info {
-  display: flex;
-  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden; /* Prevent text overflow */
+  cursor: pointer;
+  margin-right: 10px; /* Space before buttons */
 }
 
 .song-name {
-  font-weight: bold;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap; /* Prevent wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis for long names */
+  margin-bottom: 3px;
 }
 
 .song-artist {
-  font-size: 0.9rem;
-  color: #ccc;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.audio-player-container {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.85);
-  padding: 15px 25px;
-  border-radius: 30px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-  max-width: 600px;
-  width: 90%;
-  z-index: 10;
+.song-actions {
   display: flex;
-  justify-content: center;
   align-items: center;
+  flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+.song-actions .MuiIconButton-root {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px; /* Smaller padding for icon buttons */
+  transition: color 0.2s ease;
+}
+.song-actions .MuiIconButton-root:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.song-actions .MuiIconButton-root:disabled {
+  color: rgba(255, 255, 255, 0.4); /* Dim disabled button */
+  cursor: not-allowed;
+}
+
+.play-button {
+  margin-right: 5px; /* Space between play and set */
+}
+
+.shared-indicator {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #ffeb3b;
+  color: #333;
+  font-size: 0.65rem;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+
+/* Sticky Audio Player Area */
+.audio-player-sticky-container {
+  position: fixed; /* Stick to the bottom */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Darker background for player */
+  backdrop-filter: blur(5px); /* Blur effect */
+  padding: 10px 15px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10; /* Ensure it's above other content */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shared-song-info-player {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 5px; /* Space if audio player is also shown */
+}
+.shared-song-info-player strong {
+  color: #fff;
+}
+
+.audio-player-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .audio-player {
-  width: 100%;
-  outline: none;
-  border-radius: 20px;
+  width: 100%; /* Take full width */
+  height: 40px; /* Standard height */
+  max-width: calc(100% - 100px); /* Leave space for quality text */
+  filter: invert(1) hue-rotate(180deg); /* Basic styling for default player controls to be light */
 }
 
-/* Responsive */
+.audio-quality {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 15px;
+  white-space: nowrap;
+}
+
+/* Responsive Adjustments (Optional Example) */
 @media (max-width: 600px) {
-  .search-form {
-    flex-direction: column;
+  .music-heading-title {
+    font-size: 1.3rem;
   }
-
-  .btn {
-    width: 100%;
-    max-width: none;
+  .song-name {
+    font-size: 0.9rem;
   }
-
-  .song-list {
-    max-width: 100%;
-    padding: 0 10px;
+  .song-artist {
+    font-size: 0.75rem;
   }
-
-  .audio-player-container {
-    bottom: 10px;
-    padding: 10px 15px;
-    border-radius: 20px;
+  .audio-player {
+     max-width: calc(100% - 80px); /* Adjust space on smaller screens */
   }
-}
-
-.heading-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.search-form {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.search-input {
-  width: 300px;
-  padding: 8px;
-  border-radius: 20px;
-  border: none;
-  outline: none;
-  font-size: 1rem;
-}
-
-.btn {
-  background-color: black;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 20px;
-  margin-left: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  max-width: 200px;
-  transition: background-color 0.3s ease;
-}
-
-.menu-button {
-  background: var(--primary-color);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-  transition: var(--transition-standard);
-}
-
-.menu-button:hover {
-  background: var(--secondary-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-medium);
-}
-
-.error-text {
-  color: #ff6b6b;
-  margin-bottom: 1rem;
-}
-
-.song-list {
-  list-style-type: none;
-  padding: 0;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.song-item {
-  display: flex;
-  align-items: center;
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.song-item:hover,
-.song-item:focus {
-  background: rgba(255, 255, 255, 0.2);
-  outline: none;
-}
-
-.song-image {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  margin-right: 10px;
-  border-radius: 8px;
-}
-
-.song-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.song-name {
-  font-weight: bold;
-  font-size: 1rem;
-}
-
-.song-artist {
-  font-size: 0.9rem;
-  color: #ccc;
-}
-
-.audio-player-container {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  padding: 10px 20px;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  max-width: 600px;
-  width: 90%;
-  z-index: 10;
-}
-
-.audio-player {
-  width: 100%;
-  outline: none;
-  border-radius: 12px;
+  .audio-quality {
+    font-size: 0.7rem;
+    margin-left: 10px;
+  }
+  .MusicPage {
+    padding: 10px;
+    padding-bottom: 130px; /* Ensure enough space */
+  }
 }

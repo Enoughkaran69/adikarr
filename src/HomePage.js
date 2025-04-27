@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './HomePage.css';
 import { auth, db } from './firebase';
@@ -6,15 +5,24 @@ import { doc, getDoc, updateDoc, writeBatch, deleteField, onSnapshot, collection
 import defaultProfile from './logo.png';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
+import {
+    IconButton, Tooltip, Menu, MenuItem, Box, Typography, Switch, Paper, Grid, Button as MuiButton // Renamed Button to MuiButton to avoid conflict
+} from '@mui/material'; // Import necessary MUI components
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import L from 'leaflet';
+import EventIcon from '@mui/icons-material/Event'; // Icon for Events button
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // Icon for Chat button
+import MusicNoteIcon from '@mui/icons-material/MusicNote'; // Icon for Music button
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'; // Custom player icons
+import PauseIcon from '@mui/icons-material/Pause'; // Custom player icons
 
-// Custom markers for the map
+import L from 'leaflet';
+import { useNavigate } from 'react-router-dom';
+
+import { useSharedData } from './contexts/SharedDataContext';
+
+// Custom markers for the map (keep as is)
 const createCustomIcon = (color) => new L.Icon({
   iconUrl: `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>`,
   iconSize: [38, 38],
@@ -22,9 +30,11 @@ const createCustomIcon = (color) => new L.Icon({
   popupAnchor: [0, -32]
 });
 
-const userIcon = createCustomIcon('%23FF4081');
-const partnerIcon = createCustomIcon('%234CAF50');
+const userIcon = createCustomIcon('%23FF4081'); // Pinkish
+const partnerIcon = createCustomIcon('%234CAF50'); // Green
 
+// --- Custom Audio Player ---
+// (Using MUI icons for play/pause)
 function CustomAudioPlayer({ src }) {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -36,12 +46,13 @@ function CustomAudioPlayer({ src }) {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(e => console.error("Audio play failed:", e)); // Catch potential errors
     }
   };
 
   const onPlay = () => setIsPlaying(true);
   const onPause = () => setIsPlaying(false);
+  const onEnded = () => setIsPlaying(false); // Reset play state when finished
 
   const onTimeUpdate = () => {
     if (!audioRef.current) return;
@@ -54,14 +65,21 @@ function CustomAudioPlayer({ src }) {
   };
 
   const onSeek = (e) => {
-    if (!audioRef.current) return;
-    const newTime = e.nativeEvent.offsetX / e.currentTarget.clientWidth * duration;
-    audioRef.current.currentTime = newTime;
-    setProgress(newTime);
+    if (!audioRef.current || !duration) return;
+    // Calculate seek position relative to the progress bar clicked
+    const progressBar = e.currentTarget;
+    const clickPosition = e.nativeEvent.offsetX;
+    const barWidth = progressBar.clientWidth;
+    const newTime = (clickPosition / barWidth) * duration;
+
+    if (isFinite(newTime)) { // Ensure newTime is a valid number
+        audioRef.current.currentTime = newTime;
+        setProgress(newTime);
+    }
   };
 
   const formatTime = (time) => {
-    if (isNaN(time)) return '0:00';
+    if (isNaN(time) || time === 0) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
@@ -69,40 +87,49 @@ function CustomAudioPlayer({ src }) {
 
   return (
     <div className="custom-audio-player">
-      <button className="play-pause-button" onClick={togglePlayPause}>
-        {isPlaying ? '❚❚' : '▶'}
-      </button>
-      <div className="audio-progress" onClick={onSeek}>
-        <div className="audio-progress-filled" style={{ width: `${(progress / duration) * 100}%` }} />
+      <IconButton onClick={togglePlayPause} size="small" className="play-pause-button-mui">
+        {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+      </IconButton>
+      <div className="audio-progress-container">
+        <div className="audio-time current-time">{formatTime(progress)}</div>
+        <div className="audio-progress" onClick={onSeek}>
+          <div className="audio-progress-filled" style={{ width: duration > 0 ? `${(progress / duration) * 100}%` : '0%' }} />
+        </div>
+        <div className="audio-time duration-time">{formatTime(duration)}</div>
       </div>
-      <div className="audio-time">{formatTime(progress)} / {formatTime(duration)}</div>
       <audio
         ref={audioRef}
         src={src}
         onPlay={onPlay}
         onPause={onPause}
+        onEnded={onEnded} // Handle song ending
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
         preload="metadata"
+        // Consider adding error handling
+        onError={(e) => console.error("Audio Error:", e)}
       />
     </div>
   );
 }
+// --- End Custom Audio Player ---
+
 
 function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   const user = auth.currentUser;
   const [partner, setPartner] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [partnerLocation, setPartnerLocation] = useState(null);
-  const [distance, setDistance] = useState('Calculating...');
+  const [distance, setDistance] = useState('...'); // Default to ...
   const [error, setError] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [partnerId, setPartnerId] = useState(null);
-  const [sharedSong, setSharedSong] = useState(null);
-  const [lastMessages, setLastMessages] = useState([]);
-  const [showChat, setShowChat] = useState(false);
-  // Fetch partnerId on mount or when user changes, independent of showMap
+  const navigate = useNavigate();
+
+  const { sharedSong, lastMessages } = useSharedData();
+
+  // Fetch partnerId (keep as is)
   useEffect(() => {
     const fetchPartnerId = async () => {
       const user = auth.currentUser;
@@ -114,199 +141,204 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
           const userData = userDocSnap.data();
           if (userData.partner) {
             setPartnerId(userData.partner);
+            // Fetch partner data here as well for profile display
+            const partnerDocRef = doc(db, 'users', userData.partner);
+            const partnerDocSnap = await getDoc(partnerDocRef);
+            if (partnerDocSnap.exists()) {
+                setPartner(partnerDocSnap.data());
+            } else {
+                console.warn("Partner document not found for ID:", userData.partner);
+                setPartner(null); // Clear partner if doc doesn't exist
+            }
+          } else {
+            setPartnerId(null);
+            setPartner(null); // Clear partner if not set in user doc
           }
         }
       } catch (error) {
-        console.error('Error fetching partnerId:', error);
+        console.error('Error fetching partnerId and data:', error);
+        setError("Could not load partner information.");
       }
     };
     fetchPartnerId();
+    // Consider adding a listener here if partner changes often without page reload
   }, [user]);
 
- 
 
-  // Set up sharedSong listener when partnerId changes, independent of showMap
-  useEffect(() => {
-    if (!partnerId) return;
-    const user = auth.currentUser;
-    if (!user) return;
+  // Menu handlers (keep as is)
+  const handleMenuOpen = (event) => setMenuAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setMenuAnchorEl(null);
 
-    const docId = [user.uid, partnerId].sort().join('_');
-    const sharedSongDocRef = doc(db, 'sharedSongs', docId);
-
-    const unsubscribe = onSnapshot(sharedSongDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const songData = docSnap.data();
-        setSharedSong(songData);
-      } else {
-        setSharedSong(null);
-      }
-    });
-
-    // Fetch last 2 chat messages
-    const messagesCollectionRef = collection(db, 'chats', docId, 'messages');
-    const messagesQuery = query(messagesCollectionRef, orderBy('createdAt', 'desc'), limit(2));
-    const unsubscribeMessages = onSnapshot(messagesQuery, (querySnapshot) => {
-      const msgs = [];
-      querySnapshot.forEach((doc) => {
-        msgs.push({ id: doc.id, ...doc.data() });
-      });
-      setLastMessages(msgs.reverse());
-    });
-
-    return () => {
-      unsubscribe();
-      unsubscribeMessages();
-    };
-  }, [partnerId]);
-
-  // Handle Notify button click using Firestore for notification
-  const handleNotifyClick = async () => {
-    if (!partnerId) {
-      alert('No partner connected to notify.');
-      return;
+  // Breakup and Logout handlers (keep as is)
+  const handleBreakup = async () => {
+    handleMenuClose(); // Close menu after action
+    if (!partner && !partnerId) { // Check both partner state and fetched partnerId
+        alert('No partner to disconnect.');
+        return;
+    }
+    const currentPartnerId = partnerId || partner?.id; // Use fetched ID or ID from partner state
+    if (!currentPartnerId) {
+        alert('Cannot determine partner ID.');
+        return;
     }
 
-  };
-
-  const handleMenuOpen = (event) => {
-    setMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-  };
-
-  const handleBreakup = async () => {
-    if (!partner) return;
+    // Confirmation dialog
+    if (!window.confirm("Are you sure you want to disconnect from your partner?")) {
+        return;
+    }
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        if (!userData.partner) {
-          alert('No partner to disconnect.');
-          return;
-        }
+        const userDocRef = doc(db, 'users', user.uid);
+        const partnerDocRef = doc(db, 'users', currentPartnerId);
 
-        const partnerDocRef = doc(db, 'users', userData.partner);
+        // Check if partner document actually exists before trying to update it
         const partnerDoc = await getDoc(partnerDocRef);
 
-        if (!partnerDoc.exists()) {
-          alert('Partner document does not exist.');
-          return;
-        }
-
         const batch = writeBatch(db);
-        const userDocRef = doc(db, 'users', user.uid);
 
+        // Update user's document
         batch.update(userDocRef, { partner: deleteField() });
-        batch.update(partnerDocRef, { partner: deleteField() });
+
+        // Update partner's document only if it exists
+        if (partnerDoc.exists()) {
+            batch.update(partnerDocRef, { partner: deleteField() });
+        } else {
+            console.warn("Partner document didn't exist, only updating current user.");
+        }
 
         await batch.commit();
 
         setPartner(null);
+        setPartnerId(null); // Clear partnerId state
+        setPartnerLocation(null); // Clear partner location
         alert('You have disconnected from your partner.');
-        window.location.reload(); // Reload the page after disconnecting
-      } else {
-        alert('User document does not exist.');
-      }
+        navigate('/main'); // Navigate back to main page after breakup
     } catch (error) {
-      console.error('Error during breakup:', error);
-      alert('Failed to disconnect. Please try again.');
+        console.error('Error during breakup:', error);
+        alert('Failed to disconnect. Please try again.');
     }
-  };
+};
+
 
   const handleLogout = async () => {
+    handleMenuClose(); // Close menu
     try {
       await auth.signOut();
-      window.location.reload();
+      // No need to navigate here, App.js handles redirection on auth state change
     } catch (error) {
       console.error('Error during logout:', error);
       alert('Failed to log out. Please try again.');
     }
   };
 
-  // Cache last known data for offline support
+  // Cache logic (keep as is)
   useEffect(() => {
     const cachedUserLocation = localStorage.getItem('userLocation');
     const cachedPartnerData = localStorage.getItem('partnerData');
-
-    if (cachedUserLocation) {
-      setUserLocation(JSON.parse(cachedUserLocation));
-    }
-
+    if (cachedUserLocation) setUserLocation(JSON.parse(cachedUserLocation));
     if (cachedPartnerData) {
       const parsedData = JSON.parse(cachedPartnerData);
-      setPartner(parsedData.partner);
-      setPartnerLocation(parsedData.partnerLocation);
+      // Only set if partnerId matches the cached partner's uid
+      if (partnerId && parsedData.partner?.uid === partnerId) {
+        setPartner(parsedData.partner);
+        setPartnerLocation(parsedData.partnerLocation);
+      } else if (!partnerId) {
+          // Maybe clear cache if no partnerId? Or just don't load stale data.
+          localStorage.removeItem('partnerData');
+      }
     }
-  }, []);
+  }, [partnerId]); // Depend on partnerId
 
+  // Fetch user data and location (modified to use partnerId)
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        if (user && showMap) {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
+    let userLocationWatcher = null;
+    let partnerListenerUnsubscribe = () => {};
 
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
+    const fetchAndWatchUserData = async () => {
+      if (!user) return;
 
-            // Update user's location in Firestore on page load
-            if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(async (position) => {
-                const newLocation = {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                };
-                setUserLocation(newLocation);
-                localStorage.setItem('userLocation', JSON.stringify(newLocation));
-                await updateDoc(userDocRef, { location: newLocation });
-              }, (geoError) => {
-                setError('Failed to fetch your location. Please enable location services.');
-                console.error('Geolocation error:', geoError);
-              });
-            } else {
-              setError('Geolocation is not supported by your browser.');
+      const userDocRef = doc(db, 'users', user.uid);
+
+      // Get initial user location and update Firestore
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const newLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              timestamp: Date.now() // Add timestamp
+            };
+            setUserLocation(newLocation);
+            localStorage.setItem('userLocation', JSON.stringify(newLocation));
+            try {
+              await updateDoc(userDocRef, { location: newLocation });
+            } catch (updateError) {
+              console.error("Error updating user location:", updateError);
             }
+          },
+          (geoError) => {
+            setError('Could not get your location. Please enable location services.');
+            console.error('Geolocation error:', geoError);
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 } // Options
+        );
 
-            if (userData.partner) {
-              const partnerDocRef = doc(db, 'users', userData.partner);
-              const partnerDoc = await getDoc(partnerDocRef);
+        // Optional: Watch position for real-time updates (can be battery intensive)
+        // userLocationWatcher = navigator.geolocation.watchPosition(...)
 
-              if (partnerDoc.exists()) {
-                const partnerData = partnerDoc.data();
-                setPartner(partnerData);
-                setPartnerLocation(partnerData.location);
-                localStorage.setItem('partnerData', JSON.stringify({
-                  partner: partnerData,
-                  partnerLocation: partnerData.location,
-                }));
-              } else {
-                setError('Failed to fetch partner data.');
-              }
+      } else {
+        setError('Geolocation is not supported by this browser.');
+      }
+
+      // Listen for partner's location changes if partnerId exists and map is shown
+      if (partnerId && showMap) {
+        const partnerDocRef = doc(db, 'users', partnerId);
+        partnerListenerUnsubscribe = onSnapshot(partnerDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const partnerData = docSnap.data();
+            // Update partner state only if needed (e.g., name change)
+            // setPartner(prev => ({ ...prev, ...partnerData })); // Careful with overwrites
+            if (partnerData.location) {
+              setPartnerLocation(partnerData.location);
+              // Update cache if needed
+              localStorage.setItem('partnerData', JSON.stringify({
+                partner: partnerData, // Cache full partner data
+                partnerLocation: partnerData.location,
+              }));
+            } else {
+              setPartnerLocation(null); // Partner has no location shared
             }
           } else {
-            setError('Failed to fetch user data.');
+            setError('Partner data not found.');
+            setPartner(null);
+            setPartnerLocation(null);
+            localStorage.removeItem('partnerData');
           }
-        } else {
-          // Clear error and location if showMap is false
-          setError(null);
-          setUserLocation(null);
+        }, (firestoreError) => {
+          setError('Error listening to partner data.');
+          console.error('Partner listener error:', firestoreError);
           setPartnerLocation(null);
-        }
-      } catch (firestoreError) {
-        setError('An error occurred while fetching data. Please try again later.');
-        console.error('Firestore error:', firestoreError);
+        });
+      } else {
+        // If map is hidden or no partner, clear partner location
+        setPartnerLocation(null);
       }
     };
 
-    fetchUserData();
-  }, [user , showMap]);
+    fetchAndWatchUserData();
 
+    // Cleanup function
+    return () => {
+      if (userLocationWatcher) {
+        navigator.geolocation.clearWatch(userLocationWatcher);
+      }
+      partnerListenerUnsubscribe(); // Unsubscribe from partner listener
+    };
+  }, [user, partnerId, showMap]); // Dependencies
+
+  // Calculate distance (keep as is, but handle null locations better)
   useEffect(() => {
-    if (userLocation && partnerLocation) {
+    if (userLocation?.lat && userLocation?.lng && partnerLocation?.lat && partnerLocation?.lng) {
       const R = 6371; // Radius of the Earth in km
       const dLat = ((partnerLocation.lat - userLocation.lat) * Math.PI) / 180;
       const dLng = ((partnerLocation.lng - userLocation.lng) * Math.PI) / 180;
@@ -318,73 +350,64 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
           Math.sin(dLng / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const calculatedDistance = R * c;
-      setDistance(`${calculatedDistance.toFixed(2)} km`);
+      setDistance(`${calculatedDistance.toFixed(1)} km`); // Use 1 decimal place
     } else {
-      setDistance('Calculating...');
+      setDistance('...'); // Show ... if locations are missing
     }
   }, [userLocation, partnerLocation]);
 
+  // Memoized Map (keep as is)
   const memoizedMap = useMemo(() => {
-    if (userLocation && partnerLocation) {
+    // Ensure both locations have valid lat/lng before rendering
+    if (showMap && userLocation?.lat && userLocation?.lng && partnerLocation?.lat && partnerLocation?.lng) {
+      const centerPosition = [
+          (userLocation.lat + partnerLocation.lat) / 2,
+          (userLocation.lng + partnerLocation.lng) / 2
+      ];
+      // Calculate bounds to fit both markers
+      const bounds = L.latLngBounds([userLocation.lat, userLocation.lng], [partnerLocation.lat, partnerLocation.lng]);
+
       return (
-        <MapContainer center={userLocation} zoom={13} style={{ height: '400px', width: '100%' }}>
+        <MapContainer
+            bounds={bounds} // Use bounds to set initial view
+            boundsOptions={{ padding: [50, 50] }} // Add padding
+            style={{ height: '350px', width: '100%', borderRadius: '8px', marginTop: '15px' }} // Style map
+            scrollWheelZoom={false} // Disable scroll wheel zoom for better mobile UX
+        >
           <TileLayer
-            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // Standard OSM tiles
+            // url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" // Alternative nice tiles (CartoDB Voyager)
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
-          <Marker position={userLocation} icon={userIcon}>
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
             <Popup>You are here</Popup>
           </Marker>
-          <Marker position={partnerLocation} icon={partnerIcon}>
+          <Marker position={[partnerLocation.lat, partnerLocation.lng]} icon={partnerIcon}>
             <Popup>{partner?.name || 'Partner'}'s location</Popup>
           </Marker>
-          <Polyline 
-            positions={[userLocation, partnerLocation]}
-            color="#FF4081"
+          <Polyline
+            positions={[[userLocation.lat, userLocation.lng], [partnerLocation.lat, partnerLocation.lng]]}
+            color="#FF4081" // Match user icon color
             weight={3}
-            opacity={0.6}
-            dashArray="10, 10"
+            opacity={0.7}
+            dashArray="5, 10"
           />
         </MapContainer>
       );
     }
-    return null;
-  }, [userLocation, partnerLocation]);
+    return null; // Return null if map shouldn't be shown or locations are invalid
+  }, [showMap, userLocation, partnerLocation, partner?.name]); // Include partner.name in dependencies
 
-  useEffect(() => {
-    if (!partnerId) return;
-    const user = auth.currentUser;
-    if (!user) return;
-
-    // Create a consistent doc ID for shared song between two users (sorted IDs)
-    const docId = [user.uid, partnerId].sort().join('_');
-    const sharedSongDocRef = doc(db, 'sharedSongs', docId);
-
-    // Listen for real-time updates on shared song
-    const unsubscribe = onSnapshot(sharedSongDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const songData = docSnap.data();
-        // alert(`Currently set song: ${songData.name} by ${songData.artist}`);
-        setSharedSong(songData);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [partnerId]);
-
-  if (showChat && partner) {
-    const ChatPage = require('./ChatPage').default;
-    return <ChatPage user={user} partner={partner} onBack={() => setShowChat(false)} />;
-  }
 
   return (
     <div className="HomePage">
-            <div className ="heading">
-      <div>
-      <div className="heading-title">ADI KAR</div>
-      <div className="sub-title">CONNECTING COUPLES</div>
-    </div>
-    <Tooltip title="Menu">
+      {/* Header (keep as is) */}
+      <div className="heading">
+        <div>
+          <div className="heading-title">ADI KAR</div>
+          <div className="sub-title">CONNECTING COUPLES</div>
+        </div>
+        <Tooltip title="Menu">
           <IconButton className="menu-button" onClick={handleMenuOpen}>
             <MoreVertIcon />
           </IconButton>
@@ -393,136 +416,190 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
           anchorEl={menuAnchorEl}
           open={Boolean(menuAnchorEl)}
           onClose={handleMenuClose}
+          MenuListProps={{ 'aria-labelledby': 'basic-button' }} // Accessibility
         >
-          <MenuItem onClick={handleBreakup}>Disconnect</MenuItem>
+          <MenuItem onClick={handleBreakup} disabled={!partner && !partnerId}>Disconnect</MenuItem>
           <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
-  </div>
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-        </div>
-      )}
-     
+      </div>
 
+      {/* Error Display */}
+      {error && (
+        <Paper elevation={2} sx={{ p: 1.5, mb: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
+          <Typography variant="body2">{error}</Typography>
+        </Paper>
+      )}
+
+      {/* Profile Section (keep as is) */}
       <div className="profile-container">
         <div className="partner-profile">
-          <img 
-            src={user?.photoURL || defaultProfile} 
-            alt="Your Profile" 
+          <img
+            src={user?.photoURL || defaultProfile}
+            alt="Your Profile"
             className="profile-image"
             onError={(e) => e.target.src = defaultProfile}
           />
-          <h2>{user?.displayName}</h2>
+          <Typography variant="h6" component="h2">{user?.displayName || "You"}</Typography>
         </div>
-
         <div className="connection-indicator">
           <FavoriteIcon className="heart-icon" />
         </div>
-
         <div className="partner-profile">
-          <img 
-            src={partner?.profilePicture || defaultProfile} 
-            alt="Partner Profile" 
+          <img
+            src={partner?.photoURL || defaultProfile}
+            alt="Partner Profile"
             className="profile-image"
             onError={(e) => e.target.src = defaultProfile}
           />
-          <h2>{partner?.name}</h2>
+          <Typography variant="h6" component="h2">{partner?.name || "Partner"}</Typography>
         </div>
       </div>
 
-      <div className="shared-song-container">
-          {sharedSong && (
-          <div className="shared-song-display" role="region" aria-label="Shared Song">
-            <div className="shared-song-row">
-              {sharedSong.thumbnail && (
-                <img
-                  src={sharedSong.thumbnail}
-                  alt={`${sharedSong.name} thumbnail`}
-                  className="song-thumbnail-small"
-                  onClick={() => onNavigateToMusicPage()}
-                  style={{ cursor: 'pointer' }}
-                />
-              )}
-              <div className="song-info-row">
-                <div className="song-details-row">
-                  <p className="song-title"><strong>{sharedSong.name}</strong></p>
-                  <p className="song-artist">by {sharedSong.artist}</p>
+      {/* Shared Song Section (Enhanced Styling) */}
+      {sharedSong && (
+       
+            <div className="shared-song-display" role="region" aria-label="Shared Song">
+                <div className="shared-song-row">
+                    {sharedSong.thumbnail && (
+                    <img
+                        src={sharedSong.thumbnail}
+                        alt={`${sharedSong.name} thumbnail`}
+                        className="song-thumbnail-small"
+                        onClick={() => onNavigateToMusicPage()} // Keep navigation on click
+                        style={{ cursor: 'pointer' }}
+                    />
+                    )}
+                    <div className="song-info-row">
+                        <div className="song-details-row">
+                            <Typography variant="subtitle1" className="song-title" noWrap>
+                                {sharedSong.name || "Unknown Song"}
+                            </Typography>
+                            <Typography variant="body2" className="song-artist" noWrap sx={{ opacity: 0.8 }}>
+                                by {sharedSong.artist || "Unknown Artist"}
+                            </Typography>
+                        </div>
+                        {sharedSong.downloadUrl && (
+                            <CustomAudioPlayer src={sharedSong.downloadUrl} />
+                        )}
+                    </div>
                 </div>
-                {sharedSong.downloadUrl && (
-                  <CustomAudioPlayer src={sharedSong.downloadUrl} />
-                )}
-              </div>
             </div>
-          </div>
-        )}
-      </div>
-     
-      <div className="other-item">
-            
-      <div className="switch-container">
-                Location<input 
-        type="checkbox" 
-        id="switch" 
-        checked={showMap} 
-        onChange={() => setShowMap(!showMap)} 
-      />
-      <label htmlFor="switch">Toggle</label>
-      </div>
-            
-      {/* Last 2 chat messages popup */}
-      {lastMessages.length > 0 && (
-        <div className="chat-popup" onClick={() => setShowChat(true)} role="button" tabIndex={0} onKeyPress={() => setShowChat(true)} aria-label="Open chat">
-          {lastMessages.map((msg) => {
-            const isSent = msg.senderId === user.uid;
-            const senderProfilePic = isSent ? user.photoURL : partner?.profilePicture;
-            const senderName = isSent ? (user.displayName || 'You') : (partner?.name || 'Partner');
-            return (
-              <div key={msg.id} className={`chat-popup-message ${isSent ? 'sent' : 'received'}`}>
-                <img
-                  src={senderProfilePic || './logo.png'}
-                  alt={`${senderName} profile`}
-                  className="chat-popup-message-icon"
-                  onError={(e) => { e.target.src = './logo.png'; }}
-                />
-                <span className="chat-popup-text">{msg.text}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
       
-              {/* Added 4 buttons aligned */} 
-              <div className="button-group">
-              <button className="btn" onClick={onNavigateToEventPage}>
-                <span role="img" aria-label="events" className="btn-icon">📅</span> Events
-              </button>
-                <button className="btn" onClick={() => setShowChat(true)}>
-                  <span role="img" aria-label="chat" className="btn-icon">💬</span> Chat
-                </button>
-                
-                {/* Removed Music button as thumbnail click navigates to music page */} 
-                <button className="btn" onClick={() => onNavigateToMusicPage()}>Music</button> 
-              </div>
-              </div>
-
-      {showMap && memoizedMap && (
-        <div className="map-container">
-          {memoizedMap}
-          <div className="map-info">
-            <div className="info-row">
-              <div className="distance-info">
-                <LocationOnIcon />
-                <span>
-                  Distance: <strong>{distance}</strong>
-                </span>
-              </div>
-            
-            </div>
-          </div>
-        </div>
       )}
-    </div>
+
+
+      {/* --- Enhanced "Other Items" Section --- */}
+      <Paper elevation={1} sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(100, 100, 100, 0.06)', backdropFilter: 'blur(5px)' }}>
+
+        {/* Location Toggle and Info */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', color: 'white' }}>
+            <LocationOnIcon sx={{ mr: 1, fontSize: '1.2rem', opacity: 0.8, color: '#fff23c' }} />
+            Share Location
+          </Typography>
+          <Box display="flex" alignItems="center">
+             {showMap && userLocation && partnerLocation && (
+                <Typography variant="body2" sx={{ mr: 1, opacity: 0.9,color: 'white' }}>
+                    {distance} apart
+                </Typography>
+             )}
+  <Switch
+            className="location-switch" // Add a specific class name
+            checked={showMap}
+            onChange={() => setShowMap(!showMap)}
+            color="white" // Use a standard theme color like "primary" or "secondary"
+                           // Or remove this prop if you want to define the active color solely in CSS
+            inputProps={{ 'aria-label': 'Toggle location sharing map' }}
+          />
+
+          </Box>
+        </Box>
+
+        {/* Render Map inside this Paper if shown */}
+        {showMap && memoizedMap}
+
+        {/* Recent Chat Preview */}
+        {lastMessages.length > 0 && (
+          <Box
+            className="chat-preview-box"
+            onClick={() => navigate('/chat')}
+            sx={{
+              mt: showMap ? 2 : 0, // Add margin top if map is shown
+              p: 1.5,
+              
+              borderRadius: '8px',
+              cursor: 'pointer',
+              '&:hover': { bgcolor: 'rgba(131, 130, 130, 0)' }
+            }}
+          >
+
+            {lastMessages.map((msg) => {
+              const isSent = msg.senderId === user?.uid; // Safe check for user
+              const senderProfilePic = isSent ? user?.photoURL : partner?.photoURL;
+              // const senderName = isSent ? 'You' : (partner?.name || 'Partner'); // Not needed for preview
+              return (
+                <Box key={msg.id} display="flex" alignItems="center" mb={0.5} className={`chat-popup-message ${isSent ? 'sent' : 'received'}`}>
+                  <img
+                    src={senderProfilePic || defaultProfile}
+                    alt="" // Decorative image
+                    className="chat-popup-message-icon"
+                    onError={(e) => { e.target.src = defaultProfile; }}
+                  />
+                  <Typography variant="body2" className="chat-popup-text" noWrap sx={{ flexGrow: 1, opacity: isSent ? 0.8 : 1 }}>
+                    {msg.text}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        {/* Action Buttons Grid */}
+        <Box mt={2 }> {/* Add margin top */}
+          <Grid container spacing={2}>
+            <Grid item xs={3}> {/* Adjust xs based on how many buttons */}
+              {/* Converted to standard button with btn class */}
+              <button
+                className="btn" // Apply the requested class
+                onClick={onNavigateToEventPage}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} // Mimic fullWidth and center content
+              >
+                <EventIcon fontSize="small" sx={{ mr: 0.5 }} /> {/* Keep icon inside */}
+                Events
+              </button>
+            </Grid>
+            <Grid item xs={4}>
+              {/* Converted MuiButton to standard button with btn class */}
+              <button
+                className="btn" // Apply the requested class
+                onClick={() => navigate('/chat')}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} // Mimic fullWidth and center content
+              >
+                <ChatBubbleOutlineIcon fontSize="small" sx={{ mr: 0.5 }} /> {/* Keep icon inside */}
+                Chat
+              </button>
+            </Grid>
+            <Grid item xs={4}>
+              {/* Converted MuiButton to standard button with btn class */}
+              <button
+                className="btn" // Apply the requested class
+                onClick={onNavigateToMusicPage}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} // Mimic fullWidth and center content
+              >
+                <MusicNoteIcon fontSize="small" sx={{ mr: 0.5 }} /> {/* Keep icon inside */}
+                Music
+              </button>
+            </Grid>
+          </Grid>
+        </Box>
+
+
+      </Paper>
+      {/* --- End Enhanced "Other Items" Section --- */}
+
+      {/* Removed the old map-container and map-info divs */}
+
+    </div> // End HomePage
   );
 }
 

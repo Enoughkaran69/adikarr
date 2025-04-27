@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import { auth, db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteField, query, where, collection, getDocs, onSnapshot, writeBatch } from 'firebase/firestore';
 import defaultProfile from './logo.png';
+import { useNavigate } from 'react-router-dom';
 
-function MainPage({ onLogout }) {
+function MainPage() {
   const user = auth.currentUser;
   const [partnerCode, setPartnerCode] = useState('');
   const [userCode, setUserCode] = useState('');
   const [partner, setPartner] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -120,8 +122,6 @@ function MainPage({ onLogout }) {
     }
   };
 
-
-
   const handleCopyCode = () => {
     navigator.clipboard.writeText(userCode);
     alert('Code copied to clipboard!');
@@ -141,9 +141,7 @@ function MainPage({ onLogout }) {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      if (onLogout) {
-        onLogout();
-      }
+      navigate('/login');
     } catch (error) {
       console.error('Error during logout:', error);
       alert('Failed to log out. Please try again.');
@@ -151,111 +149,97 @@ function MainPage({ onLogout }) {
   };
 
   const handleGoToHome = () => {
-    window.location.reload();
+    navigate('/home');
   };
 
   return (
     <div className="MainPage">
-      
-      <div className ="heading">
-      <div>
-      <div className="heading-title">ADI KAR</div>
-      <div className="sub-title">CONNECTING COUPLES</div>
-    </div>
-    <button className="btn" onClick={handleLogout}>LOG OUT </button>
-  </div>
+      <div className="heading">
+        <div>
+          <div className="heading-title">ADI KAR</div>
+          <div className="sub-title">CONNECTING COUPLES</div>
+        </div>
+        <button className="btn" onClick={handleLogout}>LOG OUT</button>
+      </div>
 
-        <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
-        <div className="contents">
+      <h1>Welcome, {user?.displayName || 'Friend'}!</h1>
+      <div className="contents">
         <div className="user-details">
-
-       
-      
-       
-          
-        
-        {user && (
-          
-            <div className={` ${partner ? 'connected' : ''}`}>
+          {user && (
+            <div className={`${partner ? 'connected' : ''}`}>
               <div className="user-proc">
-                <img 
-                    src={user && user.photoURL ? user.photoURL : defaultProfile} 
-                    alt="Profile" 
-                    className="user-profile"
-                    onError={(e) => e.target.src = defaultProfile}
+                <img
+                  src={user && user.photoURL ? user.photoURL : defaultProfile}
+                  alt="Profile"
+                  className="user-profile"
+                  onError={(e) => e.target.src = defaultProfile}
                 />
                 <div className="user-info">
-                    <p1>{user?.displayName}</p1>
+                  <h3>{user?.displayName}</h3>
                 </div>
+              </div>
+              <div className="code-section">
+                <div className="code-display">
+                  <strong>Your Code:</strong>
+                  <span>{userCode}</span>
                 </div>
-                <div className="code-section">
-                    <div className="code-display">
-                        <strong>Your Code:</strong> 
-                        <span>{userCode}</span>
-                    </div>
-                    <div className="code-actions">
-                        <button onClick={handleCopyCode} title="Copy to clipboard">
-                            <span role="img" aria-label="copy">📋</span>
-                        </button>
-                        <button onClick={handleShareCode} title="Share code">
-                            <span role="img" aria-label="share">📤</span>
-                        </button>
-                    </div>
+                <div className="code-actions">
+                  <button onClick={handleCopyCode} title="Copy to clipboard">
+                    <span role="img" aria-label="copy">📋</span>
+                  </button>
+                  <button onClick={handleShareCode} title="Share code">
+                    <span role="img" aria-label="share">📤</span>
+                  </button>
                 </div>
+              </div>
             </div>
-        )}
+          )}
 
-        {partner && (
+          {partner && (
             <div className="partner-details">
-                <div className="partner-header">
-                    <h2>Connected with</h2>
-                    <div className="partner-profile-section">
-                        <img 
-                            src={partner && partner.profilePicture ? partner.profilePicture : defaultProfile} 
-                            alt="Partner Profile" 
-                            className="user-profile"
-                            onError={(e) => e.target.src = defaultProfile}
-                        />
-                        <h3>{partner?.name}</h3>
-                    </div>
+              <div className="partner-header">
+                <h2>Connected with</h2>
+                <div className="partner-profile-section">
+                  <img
+                    src={partner && partner.photoURL ? partner.photoURL : defaultProfile}
+                    alt="Partner Profile"
+                    className="user-profile"
+                    onError={(e) => e.target.src = defaultProfile}
+                  />
+                  <h3>{partner?.name}</h3>
                 </div>
-                <div className="button-group">
-                    <button onClick={handleBreakup} className="btn">
-                        <span role="img" aria-label="disconnect">💔</span> Disconnect
-                    </button>
-                    <button onClick={handleGoToHome} className="btn">
-                        <span role="img" aria-label="home">🏠</span> Visit Home
-                    </button>
-                </div>
+              </div>
+              <div className="button-group">
+                <button onClick={handleBreakup} className="btn">
+                  <span role="img" aria-label="disconnect">💔</span> Disconnect
+                </button>
+                <button onClick={handleGoToHome} className="btn">
+                  <span role="img" aria-label="home">🏠</span> Home
+                </button>
+              </div>
             </div>
-        )}
+          )}
 
-        {!partner && (
+          {!partner && (
             <div className="partner-section">
-                <h2>Connect with Partner</h2>
-                <div className="partner-box">
-                    <input
-                        type="text"
-                        placeholder="Enter partner code"
-                        value={partnerCode}
-                        tabIndex={0}
-                        onChange={(e) => {
-                          console.log('Partner code input changed:', e.target.value);
-                          setPartnerCode(e.target.value);
-                        }} // Ensure this updates the state
-                    />
-                    <button onClick={handleSetPartner} className="btn">
-                        <span role="img" aria-label="connect">🤝</span> Connect
-                    </button>
-                </div>
-             
+              <h2>Connect with Partner</h2>
+              <div className="partner-box">
+                <input
+                  type="text"
+                  placeholder="Enter partner code"
+                  value={partnerCode}
+                  tabIndex={0}
+                  onChange={(e) => setPartnerCode(e.target.value)}
+                />
+                <button onClick={handleSetPartner} className="btn">
+                  <span role="img" aria-label="connect">🤝</span> Connect
+                </button>
+              </div>
             </div>
-        )}
-
-
+          )}
+        </div>
+      </div>
     </div>
-     </div>
-     </div>
   );
 }
 

@@ -32,13 +32,10 @@
 
 .MainPage h1 {
   font-size: clamp(2rem, 5vw, 2.8rem);
-  
-  
+  padding-top: 20px;
   color: #ffffff;
-  
   letter-spacing: -0.02em;
   text-shadow: 0 2px 15px rgba(0,0,0,0.2);
- 
   animation: fadeInDown 0.8s ease-out;
 }
 

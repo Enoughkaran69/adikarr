@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './EventPage.css';
 import { auth, db } from './firebase';
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, onSnapshot, deleteDoc, doc, getDoc } from 'firebase/firestore';
 
 function EventPage({ onBack }) {
   const user = auth.currentUser;
@@ -20,7 +20,11 @@ function EventPage({ onBack }) {
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
-          setPartnerId(userData.partner || null);
+          if (userData.partner && typeof userData.partner === 'string' && userData.partner.trim() !== '') {
+            setPartnerId(userData.partner);
+          } else {
+            setPartnerId(null);
+          }
         }
       } catch (error) {
         console.error('Error fetching partner ID:', error);
@@ -33,24 +37,44 @@ function EventPage({ onBack }) {
   useEffect(() => {
     if (!user) return;
 
-    const eventsRef = collection(db, 'events');
+    let unsubscribeUser = () => {};
+    let unsubscribePartner = () => {};
 
-    let q;
-    if (partnerId) {
-      q = query(eventsRef, where('userId', 'in', [user.uid, partnerId]));
-    } else {
-      q = query(eventsRef, where('userId', '==', user.uid));
-    }
+    // Store events from both user and partner
+    let userEvents = [];
+    let partnerEvents = [];
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const eventsData = [];
+    // Fetch events from user's subcollection
+    const userEventsRef = collection(db, 'users', user.uid, 'events');
+    const qUser = query(userEventsRef);
+    unsubscribeUser = onSnapshot(qUser, (querySnapshot) => {
+      userEvents = [];
       querySnapshot.forEach((doc) => {
-        eventsData.push({ id: doc.id, ...doc.data() });
+        userEvents.push({ id: doc.id, userId: user.uid, ...doc.data() });
       });
-      setEvents(eventsData);
+      setEvents([...userEvents, ...partnerEvents]);
     });
 
-    return () => unsubscribe();
+    // Fetch events from partner's subcollection if partnerId exists
+    if (partnerId) {
+      const partnerEventsRef = collection(db, 'users', partnerId, 'events');
+      const qPartner = query(partnerEventsRef);
+      unsubscribePartner = onSnapshot(qPartner, (querySnapshot) => {
+        partnerEvents = [];
+        querySnapshot.forEach((doc) => {
+          partnerEvents.push({ id: doc.id, userId: partnerId, ...doc.data() });
+        });
+        setEvents([...userEvents, ...partnerEvents]);
+      });
+    } else {
+      // If no partner, just set user events
+      setEvents(userEvents);
+    }
+
+    return () => {
+      unsubscribeUser();
+      unsubscribePartner();
+    };
   }, [user, partnerId]);
 
   const handleAddEvent = async (e) => {
@@ -60,8 +84,8 @@ function EventPage({ onBack }) {
       return;
     }
     try {
-      await addDoc(collection(db, 'events'), {
-        userId: user.uid,
+      const userEventsRef = collection(db, 'users', user.uid, 'events');
+      await addDoc(userEventsRef, {
         text: eventText,
         date: eventDate,
       });
@@ -73,9 +97,10 @@ function EventPage({ onBack }) {
     }
   };
 
-  const handleDeleteEvent = async (id) => {
+  const handleDeleteEvent = async (id, ownerId) => {
     try {
-      await deleteDoc(doc(db, 'events', id));
+      const eventDocRef = doc(db, 'users', ownerId, 'events', id);
+      await deleteDoc(eventDocRef);
     } catch (error) {
       console.error('Error deleting event:', error);
       alert('Failed to delete event. Please try again.');
@@ -114,7 +139,10 @@ function EventPage({ onBack }) {
           <div key={event.id} className="event-item">
             <div className="event-text">{event.text}</div>
             <div className="event-date">{new Date(event.date).toLocaleDateString()}</div>
-            <button className="btn delete-btn" onClick={() => handleDeleteEvent(event.id)}>Delete</button>
+            <div className="event-owner">
+              {event.userId === user.uid ? 'You' : 'Partner'}
+            </div>
+            <button className="btn delete-btn" onClick={() => handleDeleteEvent(event.id, event.userId)}>Delete</button>
           </div>
         ))}
       </div>

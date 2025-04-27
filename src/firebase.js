@@ -17,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const db = getFirestore();
+const db = getFirestore(app);
 const messaging = getMessaging(app);
 
 export { auth, provider, firebaseSignInWithPopup as signInWithPopup, db, setPersistence, browserLocalPersistence, messaging, getToken, onMessage };

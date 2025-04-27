@@ -1,9 +1,12 @@
 .HomePage {
-  min-height: 100vh;
-  padding: clamp(1rem, 5vw, 2rem);
+  
+  
   position: relative;
   color: white;
   font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .HomePage::before {
@@ -15,13 +18,14 @@
   background-position: center;
   background-repeat: no-repeat;
   z-index: -2;
+  filter: brightness(0.7) saturate(1.2);
 }
 
 .HomePage::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.3));
   z-index: -1;
 }
 
@@ -29,45 +33,51 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 1rem 1.5rem;
 
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+ 
 }
 
 .heading-title {
-  font-size: 24px;
+  font-size: 2rem;
   font-weight: bold;
+  background: linear-gradient(45deg, #ff6b6b, #feca57);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sub-title {
-  font-size: 12px;
-  color: #ccc;
+  font-size: 1rem;
+  color: #ddd;
 }
 
 .btn {
-  background-color: black;
+  background: linear-gradient(45deg, #ff6b6b, #feca57);
   color: white;
-  padding: 10px 15px;
+  padding: 0.8rem 1.5rem;
   border: none;
-  border-radius: 20px;
-  margin: 5px;
+  border-radius: 2rem;
+  margin: 0.5rem;
   cursor: pointer;
   font-weight: bold;
   max-width: 200px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn:hover {
-  background-color: #e96284;
   transform: translateY(-3px);
-  box-shadow: 0 8px 15px rgba(233, 98, 132, 0.5);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
 }
 
 .btn:active {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(233, 98, 132, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
 }
 
 .btn-icon {
@@ -78,22 +88,23 @@
 
 .shared-song-display {
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 25px 30px;
+  border-radius: 1.5rem;
+  padding: 2rem;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  max-width: 650px;
-  margin: 30px auto;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 700px;
+  min-width: 300px;
+  margin: 2rem auto;
   color: #fff;
   font-family: 'Poppins', sans-serif;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .shared-song-display:hover {
-  box-shadow: 0 20px 60px rgba(31, 38, 135, 0.6);
   transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .song-info {
@@ -193,9 +204,9 @@
   width: 25px;
 }
 
-
 .menu-button {
-  background: var(--primary-color) !important;
+  background: linear-gradient(45deg, #ff6b6b, #feca57);
+
   backdrop-filter: blur(10px);
   border-radius: 12px !important;
   padding: 8px !important;
@@ -204,27 +215,30 @@
 }
 
 .menu-button:hover {
-  background: var(--secondary-color) !important;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-medium);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+.menu-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
 }
 
 .profile-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   align-items: center;
-  gap: clamp(1rem, 3vw, 2rem);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
   margin: 0 auto;
   padding: clamp(2rem, 4vw, 3rem);
- 
-  border-radius: 24px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: 2rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   max-width: 1200px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
 }
 
 .profile-container::before {
@@ -244,27 +258,26 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  
 }
 
 .profile-image {
-  width: clamp(80px, 15vw, 120px);
-  height: clamp(80px, 15vw, 120px);
+  width: clamp(100px, 18vw, 150px);
+  height: clamp(100px, 18vw, 150px);
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.2);
+  border: 4px solid rgba(255, 255, 255, 0.3);
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    0 0 0 8px rgba(255, 255, 255, 0.05);
-  transition: all 0.4s ease;
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 10px rgba(255, 255, 255, 0.1);
+  transition: all 0.5s ease;
   object-fit: cover;
 }
 
 .profile-image:hover {
-  transform: scale(1.05);
-  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05) rotate(5deg);
+  border-color: rgba(255, 255, 255, 0.5);
   box-shadow: 
-    0 16px 48px rgba(0, 0, 0, 0.3),
-    0 0 0 12px rgba(255, 255, 255, 0.08);
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 .connection-indicator {
@@ -285,33 +298,28 @@
 }
 
 .heart-icon {
-  font-size: clamp(2.5rem, 5vw, 3.5rem) !important;
-  color: var(--accent-color);
-  filter: drop-shadow(0 4px 12px rgba(244, 63, 94, 0.3));
+  font-size: clamp(3rem, 6vw, 4rem) !important;
+  color: #ff6b6b;
+  filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.7));
   animation: pulse 1.5s infinite;
   position: relative;
   z-index: 1;
 }
 
 .map-container {
-  
   margin: 2rem auto;
   width: auto;
- 
-  border-radius: 24px;
+  border-radius: 1.5rem;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
 }
 
 .map-container::before {
-
   content: '';
- 
   inset: 0;
   background: radial-gradient(
     circle at bottom left,
@@ -323,68 +331,23 @@
 }
 
 .leaflet-container {
-  
-  height: clamp(300px, 50vh, 500px);
+  height: clamp(350px, 50vh, 550px);
   width: 100%;
   z-index: 1;
 }
-input[type=checkbox]{
-	height: 0;
-	width: 0;
-	visibility: hidden;
-}
-
-label {
-	cursor: pointer;
-	text-indent: -9999px;
-	width: 40px;
-	height: 20px;
-	background: rgba(209, 209, 209, 0.26);
-	display: block;
-	border-radius: 100px;
-	position: relative;
-}
-
-label:after {
-	content: '';
-	position: absolute;
-	top: 5px;
-	left: 5px;
-	width: 10px;
-	height: 10px;
-	background: #fff;
-	border-radius: 10px;
-	transition: 0.3s;
-}
-
-input:checked + label {
-	background: #e96284;
-}
-
-input:checked + label:after {
-	left: calc(100% - 5px);
-	transform: translateX(-100%);
-}
-
-label:active:after {
-	width: 10px;
-}
 
 .map-info {
-  
-  
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.08);
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   position: relative;
   z-index: 1;
 }
 
 .info-row {
-
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
@@ -421,31 +384,27 @@ label:active:after {
   transform: translateY(-2px);
 }
 
+.song-thumbnail-small {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 1rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  margin-right: 1.5rem;
+}
+
+.song-thumbnail-small:hover {
+  transform: scale(1.08) rotate(2deg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
 /* Animation keyframes */
 @keyframes pulse {
   0% { transform: scale(1); opacity: 0.8; }
   50% { transform: scale(1.1); opacity: 1; }
   100% { transform: scale(1); opacity: 0.8; }
-}
-
-@keyframes glow {
-  from { opacity: 0.1; }
-  to { opacity: 0.3; }
-}
-
-/* Glassmorphism style for shared song container */
-.shared-song-display {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 20px;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  max-width: 600px;
-  margin: 20px auto;
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
 }
 
 /* Custom audio player styles */
@@ -492,15 +451,16 @@ label:active:after {
 }
 
 .chat-popup-message.sent {
-  background-color: #4caf50;
-  color: white;
+  background-color: #ebe7e311;
+  color: rgb(255, 252, 84);
   align-self: flex-end;
   flex-direction: row-reverse;
   text-align: right;
+  
 }
 
 .chat-popup-message.received {
-  background-color: #ff4081;
+  background-color: #ebe7e311;
   color: white;
   align-self: flex-start;
   flex-direction: row;
@@ -513,60 +473,194 @@ label:active:after {
   border-radius: 50%;
   object-fit: cover;
   margin-right: 10px;
+  margin-left: 10px;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+/* --- Chat Preview Popup Styles --- */
 
-.play-pause-button {
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  outline: none;
-  transition: color 0.3s ease;
+.chat-preview-box {
+ align-items: center;
+  display: flex;
+  flex-direction: column;
+   /* Adjust width as needed
+  border-radius: 10px; /* Slightly more rounded corners */
+  padding: 12px 15px; /* Adjust padding (top/bottom, left/right) */
+   /* Apply a blur effect for glassmorphism */
+  -webkit-backdrop-filter: blur(8px); /* Safari support */
+  /* Optional: subtle border */
+  transition: background-color 0.3s ease; /* Smooth hover transition */
+  overflow: hidden; /* Ensure content respects border radius */
 }
 
-.play-pause-button:hover {
-  color: var(--accent-color);
+
+
+.chat-preview-title {
+  display: block; /* Make it a block element */
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7); /* Lighter text color for the title */
+  margin-bottom: 8px; /* Space below the title */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+.chat-popup-message {
+  /* display: flex; align-items: center; */ /* Can be defined here or kept in sx */
+  gap: 10px; /* Space between icon and text */
+  margin-bottom: 6px; /* Space between message lines */
+}
+
+/* Style the last message line differently if needed */
+.chat-popup-message:last-child {
+  margin-bottom: 0;
+}
+
+.chat-popup-message-icon {
+  width: 28px; /* Icon size */
+  height: 28px; /* Icon size */
+  border-radius: 50%; /* Circular icon */
+  object-fit: cover; /* Ensure image covers the circle */
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Optional subtle border */
+}
+
+.chat-popup-text {
+  /* flex-grow: 1; */ /* Can be defined here or kept in sx */
+  /* white-space: nowrap; */ /* Handled by noWrap prop */
+  /* overflow: hidden; */ /* Handled by noWrap prop */
+  /* text-overflow: ellipsis; */ /* Handled by noWrap prop */
+  font-size: 0.9rem; /* Adjust text size */
+  color: #ffffff; /* White text color */
+  line-height: 1.4;
+}
+
+/* Optional: Slightly different style for sent messages */
+.chat-popup-message.sent .chat-popup-text {
+  /* Example: Slightly dimmer text already handled by opacity in sx */
+  /* color: rgba(255, 255, 255, 0.85); */
+}
+
+/* Optional: Style for received messages */
+.chat-popup-message.received .chat-popup-text {
+  /* Example: Make received text slightly bolder or different color if desired */
+  /* font-weight: 500; */
+}
+
+
+/* --- Custom Audio Player Styles --- */
+
+.custom-audio-player {
+  display: flex; /* Arrange button and progress container horizontally */
+  align-items: center; /* Vertically center items */
+  gap: 8px; /* Space between button and progress container */
+  width: 100%; /* Take full width available in its container */
+  padding: 4px 0; /* Add some vertical padding if needed */
+  /* background-color: rgba(255, 255, 255, 0.05); /* Optional: subtle background */
+  /* border-radius: 6px; */ /* Optional: rounded corners */
+}
+
+/* Style the MUI IconButton */
+.custom-audio-player .play-pause-button-mui {
+  color: #eee; /* Light color for the icon */
+  padding: 6px; /* Adjust padding for size */
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle background for the button */
+  border-radius: 50%; /* Make it circular */
+  transition: background-color 0.2s ease;
+}
+
+.custom-audio-player .play-pause-button-mui:hover {
+  background-color: rgba(255, 255, 255, 0.2); /* Slightly lighter on hover */
+}
+
+/* Container for the times and the progress bar */
+.audio-progress-container {
+  flex-grow: 1; /* Allow this container to take remaining space */
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between time displays and progress bar */
+}
+
+/* Style for both current time and duration */
+.audio-time {
+  font-size: 0.75rem; /* Smaller font size for time */
+  color: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+  min-width: 35px; /* Ensure enough space for M:SS format */
+  text-align: center;
+}
+
+/* The background/track of the progress bar */
 .audio-progress {
-  flex-grow: 1;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 5px;
-  cursor: pointer;
-  position: relative;
+  flex-grow: 1; /* Take available space between times */
+  height: 6px; /* Height of the progress bar */
+  background-color: rgba(255, 255, 255, 0.15); /* Darker track background */
+  border-radius: 3px; /* Rounded ends */
+  cursor: pointer; /* Indicate it's clickable */
+  overflow: hidden; /* Ensure filled part stays within bounds */
+  position: relative; /* Needed if you want to add a thumb later */
 }
 
+/* The filled part of the progress bar */
 .audio-progress-filled {
   height: 100%;
-  background: var(--accent-color);
-  border-radius: 5px;
-  width: 0%;
-  transition: width 0.1s linear;
+  background-color: #e0e0e0; /* Accent color for progress - adjust as needed */
+  border-radius: 3px;
+  transition: width 0.1s linear; /* Smooth width transition during playback */
 }
 
-.audio-time {
-  font-size: 12px;
-  color: #ccc;
-  min-width: 40px;
-  text-align: center;
-  user-select: none;
-}
-.song-thumbnail-small {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  margin-right: 15px;
+/* Hide the actual HTML audio element */
+.custom-audio-player audio {
+  display: none;
 }
 
-.song-thumbnail-small:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+/* --- Adjustments within the Shared Song Display --- */
+
+/* Ensure the container holding the player aligns items properly */
+.shared-song-display .song-info-row {
+    display: flex;
+    flex-direction: column; /* Stack details and player vertically */
+    justify-content: center; /* Center items vertically if needed */
+    flex-grow: 1;
+    min-width: 0; /* Prevent flex item overflow */
+    gap: 4px; /* Space between song details and player */
+}
+
+/* Ensure song details don't push the player too much */
+.shared-song-display .song-details-row {
+    min-width: 0; /* Prevent flex item overflow */
+}
+
+/* Ensure title/artist don't take excessive space */
+.shared-song-display .song-title,
+.shared-song-display .song-artist {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+/* Style the track (background bar) */
+.location-switch .MuiSwitch-track {
+  background-color: rgba(255, 255, 255, 0.2); /* Inactive track color */
+  opacity: 1; /* Ensure inactive track is visible */
+}
+
+/* Style the thumb (the circle) */
+.location-switch .MuiSwitch-thumb {
+  background-color: #ffd51db7; /* Inactive thumb color */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow (adjusted color from original) */
+  /* Note: The active thumb color is often controlled by the 'color' prop in JSX */
+}
+
+/* Styles when the switch is checked (active) */
+.location-switch .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb {
+  /* If you removed the 'color' prop in JSX or want to force a specific color */
+  /* background-color: #fff23c; */ /* Example: Force the yellow color for the active thumb */
+  background-color: #ffd51db7;/* Or often you want white for contrast */
+color: #fff;
+}
+
+.location-switch .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+ 
+  opacity: 0.7; /* Make active track slightly less intense */
 }
