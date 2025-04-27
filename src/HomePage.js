@@ -277,7 +277,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
             }
           },
           (geoError) => {
-            setError('Could not get your location. Please enable location services.');
+           
             console.error('Geolocation error:', geoError);
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 } // Options

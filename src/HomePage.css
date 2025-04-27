@@ -1,6 +1,10 @@
 .HomePage {
   
-  
+  min-height: 100vh; /* Ensure it can fill viewport */
+  width: 100%; /* Use 100% for scrollable content */
+  position: relative; /* Allow normal content flow and scrolling */
+  overflow-y: auto; /* Allow vertical scroll if content overflows */
+  overflow-x: hidden;
   position: relative;
   color: white;
   font-family: 'Poppins', sans-serif;
@@ -17,6 +21,9 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  /* --- ADDED --- */
+  background-attachment: fixed; /* Prevent stretching on scroll */
+  /* --- END ADDED --- */
   z-index: -2;
   filter: brightness(0.7) saturate(1.2);
 }
