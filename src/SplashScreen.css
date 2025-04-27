@@ -20,6 +20,7 @@
   background-image: url('https://raw.githubusercontent.com/Enoughkaran69/test/refs/heads/main/download%20(3).jpg');
   background-size: cover;
   background-position: center;
+  z-index: -1;
   background-repeat: no-repeat;
   z-index: 1;
 }
