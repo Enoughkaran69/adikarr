@@ -19,6 +19,15 @@ function MusicPage({ onBack }) {
   const [partnerId, setPartnerId] = useState(null);
   const [sharedSong, setSharedSong] = useState(null);
   const audioRef = useRef(null);
+// --- ADD HELPER FUNCTION HERE ---
+const forceHttps = (url) => {
+  if (typeof url === 'string' && url.startsWith('http://')) {
+    // Simple replacement - assumes the resource is available over HTTPS
+    return url.replace('http://', 'https://');
+  }
+  return url; // Return original if already https, not a string, or doesn't start with http://
+};
+// --- END HELPER FUNCTION ---
 
   const searchSongs = async (searchQuery) => {
     if (!searchQuery) return;
@@ -124,18 +133,23 @@ function MusicPage({ onBack }) {
   };
 
   const getBestQualityUrl = (song) => {
-     if (!song?.downloadUrl || !Array.isArray(song.downloadUrl) || song.downloadUrl.length === 0) {
-       return null;
-     }
-     // Prefer 320kbps, then 160kbps, then 96kbps, then the first available
-     const qualityOrder = ['320kbps', '160kbps', '96kbps'];
-     for (const quality of qualityOrder) {
-       const found = song.downloadUrl.find(url => url.quality === quality);
-       if (found) return found;
-     }
-     // Fallback to the first URL object if specific qualities aren't found
-     return song.downloadUrl[0];
-   };
+    if (!song?.downloadUrl || !Array.isArray(song.downloadUrl) || song.downloadUrl.length === 0) {
+      return null;
+    }
+    const qualityOrder = ['320kbps', '160kbps', '96kbps'];
+    for (const quality of qualityOrder) {
+      const found = song.downloadUrl.find(url => url.quality === quality);
+      if (found) {
+        // --- MODIFIED: Force HTTPS on the URL ---
+        return { ...found, url: forceHttps(found.url) };
+      }
+    }
+    // Fallback to the first URL object
+    const fallbackUrl = song.downloadUrl[0];
+    // --- MODIFIED: Force HTTPS on the fallback URL ---
+    return fallbackUrl ? { ...fallbackUrl, url: forceHttps(fallbackUrl.url) } : null;
+  };
+
 
 
   const handlePlaySong = (song) => {

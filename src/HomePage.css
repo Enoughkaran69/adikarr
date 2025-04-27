@@ -52,6 +52,7 @@
   font-weight: bold;
   background: linear-gradient(45deg, #ff6b6b, #feca57);
   -webkit-background-clip: text;
+  background-clip: text;  
   -webkit-text-fill-color: transparent;
 }
 
@@ -494,7 +495,7 @@
   border-radius: 10px; /* Slightly more rounded corners */
   padding: 12px 15px; /* Adjust padding (top/bottom, left/right) */
    /* Apply a blur effect for glassmorphism */
-  -webkit-backdrop-filter: blur(8px); /* Safari support */
+  
   /* Optional: subtle border */
   transition: background-color 0.3s ease; /* Smooth hover transition */
   overflow: hidden; /* Ensure content respects border radius */
@@ -541,17 +542,7 @@
   line-height: 1.4;
 }
 
-/* Optional: Slightly different style for sent messages */
-.chat-popup-message.sent .chat-popup-text {
-  /* Example: Slightly dimmer text already handled by opacity in sx */
-  /* color: rgba(255, 255, 255, 0.85); */
-}
 
-/* Optional: Style for received messages */
-.chat-popup-message.received .chat-popup-text {
-  /* Example: Make received text slightly bolder or different color if desired */
-  /* font-weight: 500; */
-}
 
 
 /* --- Custom Audio Player Styles --- */
