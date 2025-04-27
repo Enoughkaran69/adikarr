@@ -2,7 +2,7 @@
 
 .EventPage {
   min-height: 100vh;
-  padding: clamp(1rem, 3vw, 1.5rem); /* Responsive padding */
+ 
   position: relative;
   color: white;
   font-family: 'Poppins', sans-serif; /* Consistent font */
@@ -105,23 +105,23 @@
 .event-input .MuiInputLabel-root.Mui-focused {
   color: #fff !important;
 }
-.event-input input {
-  color: #fff !important; /* Ensure input text itself is white */
+.event-form input {
+  color: #353434 !important; /* Ensure input text itself is white */
 }
 /* Style date input specifically */
-.date-input input[type="date"]::-webkit-calendar-picker-indicator {
+.date-form input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1) brightness(1.2); /* Make calendar icon white and slightly brighter */
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.3s ease;
   padding: 2px; /* Add slight padding */
 }
-.date-input input[type="date"]::-webkit-calendar-picker-indicator:hover {
+.date-form input[type="date"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
 }
 /* Ensure date input text color is white (sometimes overridden) */
-.date-input input[type="date"] {
-    color: #fff !important;
+.date-form input[type="date"] {
+    color: #8f8d8d !important;
     color-scheme: dark; /* Helps with calendar appearance in some browsers */
 }
 

@@ -114,12 +114,13 @@ function EventPage({ onBack }) {
           <div className="heading-title">Memorable Events</div>
           <div className="sub-title">Add and cherish your special moments</div>
         </div>
-        <button className="btn" onClick={onBack}>Back</button>
+        
       </div>
 
       <form className="event-form" onSubmit={handleAddEvent}>
         <input
           type="text"
+          
           placeholder="Event description"
           value={eventText}
           onChange={(e) => setEventText(e.target.value)}

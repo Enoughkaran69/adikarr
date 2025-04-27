@@ -76,7 +76,10 @@ function App() {
             <Navigate to="/login" />
           }
         />
-        <Route path="/music" element={user ? <MusicPage /> : <Navigate to="/login" />} />
+        <Route path="/music" element={user ?  <MusicPage onBack={() => navigate('/home')} /> : // <-- Add the onBack prop here
+            <Navigate to="/login" />
+          }
+        />
         <Route path="/event" element={user ? <EventPage /> : <Navigate to="/login" />} />
         <Route path="/chat" element={user ? <ChatPage onBack={() => navigate('/home')} /> : <Navigate to="/login" />} />
 
