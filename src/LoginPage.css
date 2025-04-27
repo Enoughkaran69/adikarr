@@ -15,8 +15,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-image: url('https://raw.githubusercontent.com/Enoughkaran69/test/refs/heads/main/download%20(3).jpg');
   background-size: cover;
   background-position: center;
