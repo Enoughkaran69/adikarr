@@ -1,35 +1,49 @@
 .MainPage {
   min-height: 100vh;
-  width: 100vw;
-  position: fixed; /* Fix to viewport */
-  inset: 0;
+  width: 100%; /* Use 100% instead of 100vw for scrollable content */
+  /* --- MODIFIED --- */
+  position: relative; /* Allow content to scroll normally */
+  /* inset: 0; <-- REMOVE this */
+  overflow-y: auto; /* Allow vertical scroll if content overflows */
+  /* --- END MODIFIED --- */
   overflow-x: hidden;
   color: #fff;
   display: flex;
   flex-direction: column;
-
+  
+  box-sizing: border-box; /* Include padding in width/height */
 }
 
 .MainPage::before {
   content: '';
-  position: fixed;
+  position: fixed; /* Keep background fixed */
   inset: 0;
   background-image: url('https://raw.githubusercontent.com/Enoughkaran69/test/refs/heads/main/download%20(3).jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  /* --- ADDED --- */
+  background-attachment: fixed; /* Prevent stretching on scroll */
+  /* --- END ADDED --- */
   z-index: -2;
-  
 }
 
 .MainPage::after {
   content: '';
-  position: fixed;
+  position: fixed; /* Keep overlay fixed */
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: -1;
-
 }
+
+/* --- Ensure content is above background --- */
+.contents, .user-details, .partner-section, .partner-details, .heading {
+    position: relative; /* Establish stacking context */
+    z-index: 1; /* Ensure content is above the fixed background/overlay */
+}
+/* --- End Ensure content is above backgroun --- */
+
+
 
 .MainPage h1 {
   font-size: clamp(2rem, 5vw, 2.8rem);
