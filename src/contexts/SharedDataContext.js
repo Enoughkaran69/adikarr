@@ -9,6 +9,7 @@ export const SharedDataProvider = ({ children }) => {
   const [lastMessages, setLastMessages] = useState([]);
   const [partnerId, setPartnerId] = useState(null);
   const [currentUser, setCurrentUser] = useState(auth.currentUser); // Keep track of user
+  const [isLoadingPartnerData, setIsLoadingPartnerData] = useState(true);
 
   // Effect 1: Listen to Auth State Changes
   useEffect(() => {
@@ -58,6 +59,7 @@ export const SharedDataProvider = ({ children }) => {
       }
 
       // Update partnerId state only if it has actually changed
+      setIsLoadingPartnerData(true);
       setPartnerId(prevPartnerId => {
         if (prevPartnerId !== currentPartnerId) {
           console.log(`SharedDataContext: PartnerId changing from ${prevPartnerId} to ${currentPartnerId}`);
@@ -66,6 +68,7 @@ export const SharedDataProvider = ({ children }) => {
         // console.log(`SharedDataContext: PartnerId remains ${prevPartnerId}`);
         return prevPartnerId; // No change, return previous state
       });
+      setIsLoadingPartnerData(false);
 
     }, (error) => {
       console.error('SharedDataContext: Error listening to user document:', error);
@@ -156,7 +159,7 @@ export const SharedDataProvider = ({ children }) => {
 
 
   return (
-    <SharedDataContext.Provider value={{ sharedSong, lastMessages }}>
+    <SharedDataContext.Provider value={{ sharedSong, lastMessages, isLoadingPartnerData }}>
       {children}
     </SharedDataContext.Provider>
   );

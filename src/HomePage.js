@@ -123,6 +123,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   const [distance, setDistance] = useState('...'); // Default to ...
   const [error, setError] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
   const [showMap, setShowMap] = useState(false);
   const [partnerId, setPartnerId] = useState(null);
   const navigate = useNavigate();
@@ -132,39 +133,59 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   const { setIsPlaying, setCurrentTrack } = useContext(MusicContext);
   const [songs, setSongs] = useState(["https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"]);
 
-
-  // Fetch partnerId (keep as is)
+  // Fetch and cache partner data logic
   useEffect(() => {
-    const fetchPartnerId = async () => {
-      const user = auth.currentUser;
+    const fetchPartnerData = async () => {
       if (!user) return;
+
+      // Check if partner data is cached in localStorage
+      const cachedPartnerData = localStorage.getItem('partnerData');
+      if (cachedPartnerData) {
+        const parsedData = JSON.parse(cachedPartnerData);
+        setPartner(parsedData.partner);
+        setPartnerId(parsedData.partner?.uid); // Assuming partner data includes UID
+        setIsLoading(false);
+        return; // Skip fetching from Firestore
+      }
+
+      // If not in localStorage, fetch from Firestore
       try {
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
+
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
           if (userData.partner) {
-            setPartnerId(userData.partner);
-            // Fetch partner data here as well for profile display
             const partnerDocRef = doc(db, 'users', userData.partner);
             const partnerDocSnap = await getDoc(partnerDocRef);
             if (partnerDocSnap.exists()) {
-                setPartner(partnerDocSnap.data());
+              const partnerData = partnerDocSnap.data();
+              setPartner(partnerData);
+              setPartnerId(userData.partner);
+              // Cache data in localStorage
+              localStorage.setItem('partnerData', JSON.stringify({ partner: partnerData }));
+              setIsLoading(false); // Data loaded
             } else {
-                console.warn("Partner document not found for ID:", userData.partner);
-                setPartner(null); // Clear partner if doc doesn't exist
+              console.warn("Partner document not found for ID:", userData.partner);
+              setIsLoading(false); // No partner found
+              setPartner(null); // Clear partner if doc doesn't exist
+              setPartnerId(null);
             }
-          } else {
-            setPartnerId(null);
-            setPartner(null); // Clear partner if not set in user doc
+          }else {
+              setPartnerId(null);
+              setPartner(null); // Clear partner if not set in user doc
+              setIsLoading(false);
           }
+        } else {
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error fetching partnerId and data:', error);
         setError("Could not load partner information.");
+        setIsLoading(false);
       }
     };
-    fetchPartnerId();
+    fetchPartnerData();
     // Consider adding a listener here if partner changes often without page reload
   }, [user]);
 
@@ -190,6 +211,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
     if (!window.confirm("Are you sure you want to disconnect from your partner?")) {
         return;
     }
+    localStorage.removeItem('partnerData');
 
     try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -226,6 +248,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
 
   const handleLogout = async () => {
     handleMenuClose(); // Close menu
+    localStorage.removeItem('partnerData');
     try {
       await auth.signOut();
       // No need to navigate here, App.js handles redirection on auth state change
@@ -235,23 +258,6 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
     }
   };
 
-  // Cache logic (keep as is)
-  useEffect(() => {
-    const cachedUserLocation = localStorage.getItem('userLocation');
-    const cachedPartnerData = localStorage.getItem('partnerData');
-    if (cachedUserLocation) setUserLocation(JSON.parse(cachedUserLocation));
-    if (cachedPartnerData) {
-      const parsedData = JSON.parse(cachedPartnerData);
-      // Only set if partnerId matches the cached partner's uid
-      if (partnerId && parsedData.partner?.uid === partnerId) {
-        setPartner(parsedData.partner);
-        setPartnerLocation(parsedData.partnerLocation);
-      } else if (!partnerId) {
-          // Maybe clear cache if no partnerId? Or just don't load stale data.
-          localStorage.removeItem('partnerData');
-      }
-    }
-  }, [partnerId]); // Depend on partnerId
 
   // Fetch user data and location (modified to use partnerId)
   useEffect(() => {
@@ -444,18 +450,24 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
         </Paper>
       )}
 
-      {/* Profile Section (keep as is) */}
+      {/* Profile Section (modified to use isLoading) */}
       <div className="profile-container">
-        <div className="partner-profile">
+        <div className="partner-profile"> 
           <img
             src={user?.photoURL || defaultProfile}
             alt="Your Profile"
             className="profile-image"
             onError={(e) => e.target.src = defaultProfile}
           />
-          <Typography variant="h6" component="h2">{user?.displayName || "You"}</Typography>
+          <Typography variant="h6" component="h2">{user?.displayName || "You"}</Typography> 
         </div>
         <div className="connection-indicator">
+        
+        {isLoading && (
+            <div className="loading-indicator">
+              Loading... 
+            </div>
+          )}
           <FavoriteIcon className="heart-icon" />
         </div>
         <div className="partner-profile">
@@ -466,6 +478,11 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
             onError={(e) => e.target.src = defaultProfile}
           />
           <Typography variant="h6" component="h2">{partner?.name || "Partner"}</Typography>
+          {isLoading && (
+            <div className="loading-indicator">
+              Loading... 
+            </div>
+          )}
         </div>
       </div>
 
