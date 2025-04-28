@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './ChatPage.css'; // Import the CSS
 import { db, auth } from './firebase';
 import {
   collection, addDoc, onSnapshot, deleteDoc, doc, query,
   orderBy, serverTimestamp, getDoc, updateDoc, arrayUnion, arrayRemove
 } from 'firebase/firestore';
-import './ChatPage.css'; // Import the CSS
+
 import {
   IconButton, TextField, Avatar, Tooltip, CircularProgress, Box, Typography
 } from '@mui/material'; // Import Material UI components
