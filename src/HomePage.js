@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import './HomePage.css';
 import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc, writeBatch, deleteField, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
@@ -21,6 +21,7 @@ import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 
 import { useSharedData } from './contexts/SharedDataContext';
+import { MusicContext } from './contexts/MusicContext';
 
 // Custom markers for the map (keep as is)
 const createCustomIcon = (color) => new L.Icon({
@@ -36,23 +37,20 @@ const partnerIcon = createCustomIcon('%234CAF50'); // Green
 // --- Custom Audio Player ---
 // (Using MUI icons for play/pause)
 function CustomAudioPlayer({ src }) {
-  const audioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const { isPlaying, setIsPlaying, audioRef, setCurrentTrack } = useContext(MusicContext);
 
   const togglePlayPause = () => {
-    if (!audioRef.current) return;
     if (isPlaying) {
-      audioRef.current.pause();
+        setIsPlaying(false)
     } else {
-      audioRef.current.play().catch(e => console.error("Audio play failed:", e)); // Catch potential errors
+        if (src){
+            setCurrentTrack(src)
+            setIsPlaying(true);
+        }
     }
   };
-
-  const onPlay = () => setIsPlaying(true);
-  const onPause = () => setIsPlaying(false);
-  const onEnded = () => setIsPlaying(false); // Reset play state when finished
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const onTimeUpdate = () => {
     if (!audioRef.current) return;
@@ -85,31 +83,33 @@ function CustomAudioPlayer({ src }) {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  useEffect(() => {
+    audioRef.current?.addEventListener('timeupdate', onTimeUpdate);
+    audioRef.current?.addEventListener('loadedmetadata', onLoadedMetadata);
+
+    return () => {
+      audioRef.current?.removeEventListener('timeupdate', onTimeUpdate);
+      audioRef.current?.removeEventListener('loadedmetadata', onLoadedMetadata);
+    };
+  }, [src]);
+
   return (
-    <div className="custom-audio-player">
-      <IconButton onClick={togglePlayPause} size="small" className="play-pause-button-mui">
-        {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-      </IconButton>
-      <div className="audio-progress-container">
-        <div className="audio-time current-time">{formatTime(progress)}</div>
-        <div className="audio-progress" onClick={onSeek}>
-          <div className="audio-progress-filled" style={{ width: duration > 0 ? `${(progress / duration) * 100}%` : '0%' }} />
+    <>
+        <div className="custom-audio-player">
+          <IconButton onClick={togglePlayPause} size="small" className="play-pause-button-mui">
+            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+          </IconButton>
         </div>
-        <div className="audio-time duration-time">{formatTime(duration)}</div>
-      </div>
-      <audio
-        ref={audioRef}
-        src={src}
-        onPlay={onPlay}
-        onPause={onPause}
-        onEnded={onEnded} // Handle song ending
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        preload="metadata"
-        // Consider adding error handling
-        onError={(e) => console.error("Audio Error:", e)}
-      />
-    </div>
+        <div className="audio-progress-container">
+          <div className="audio-time current-time">{formatTime(progress)}</div>
+          <div className="audio-progress" onClick={onSeek}>
+            <div className="audio-progress-filled" style={{ width: duration > 0 ? `${(progress / duration) * 100}%` : '0%' }} />
+          </div>
+          <div className="audio-time duration-time">{formatTime(duration)}</div>
+        </div>
+    </>
+
+   
   );
 }
 // --- End Custom Audio Player ---
@@ -124,32 +124,58 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   const [error, setError] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [isPartnerDataCached, setIsPartnerDataCached] = useState(false);
+  const [isUserDataCached, setIsUserDataCached] = useState(false);
   const [partnerId, setPartnerId] = useState(null);
   const navigate = useNavigate();
 
   const { sharedSong, lastMessages } = useSharedData();
 
+  const { setIsPlaying, setCurrentTrack } = useContext(MusicContext);
+  const [songs, setSongs] = useState(["https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"]);
+
+
   // Fetch partnerId (keep as is)
   useEffect(() => {
-    const fetchPartnerId = async () => {
+    const fetchPartnerId = async (fromCache = false) => {
       const user = auth.currentUser;
       if (!user) return;
+
       try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          if (userData.partner) {
-            setPartnerId(userData.partner);
-            // Fetch partner data here as well for profile display
-            const partnerDocRef = doc(db, 'users', userData.partner);
-            const partnerDocSnap = await getDoc(partnerDocRef);
-            if (partnerDocSnap.exists()) {
-                setPartner(partnerDocSnap.data());
+        const cacheKey = `partnerData_${user.uid}`;
+        const cachedPartnerData = localStorage.getItem(cacheKey);
+        if (cachedPartnerData && fromCache) {
+          const { partnerData } = JSON.parse(cachedPartnerData);
+          setPartner(partnerData);
+          setPartnerId(partnerData.uid)
+          setIsPartnerDataCached(true);
+          return;
+        }
+
+        if (!isPartnerDataCached){
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (userData.partner) {
+              setPartnerId(userData.partner);
+              // Fetch partner data here as well for profile display
+              const partnerDocRef = doc(db, 'users', userData.partner);
+              const partnerDocSnap = await getDoc(partnerDocRef);
+              if (partnerDocSnap.exists()) {
+                  const data = partnerDocSnap.data()
+                  setPartner(data);
+                  localStorage.setItem(cacheKey, JSON.stringify({partnerData: data}));
+
+              } else {
+                  console.warn("Partner document not found for ID:", userData.partner);
+                  setPartner(null); // Clear partner if doc doesn't exist
+              }
             } else {
-                console.warn("Partner document not found for ID:", userData.partner);
-                setPartner(null); // Clear partner if doc doesn't exist
+              setPartnerId(null);
+              setPartner(null); // Clear partner if not set in user doc
             }
+
           } else {
             setPartnerId(null);
             setPartner(null); // Clear partner if not set in user doc
@@ -159,10 +185,14 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
         console.error('Error fetching partnerId and data:', error);
         setError("Could not load partner information.");
       }
+      
     };
-    fetchPartnerId();
+    fetchPartnerId(true);
     // Consider adding a listener here if partner changes often without page reload
   }, [user]);
+
+
+
 
 
   // Menu handlers (keep as is)
@@ -240,7 +270,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
       const parsedData = JSON.parse(cachedPartnerData);
       // Only set if partnerId matches the cached partner's uid
       if (partnerId && parsedData.partner?.uid === partnerId) {
-        setPartner(parsedData.partner);
+        //setPartner(parsedData.partner);
         setPartnerLocation(parsedData.partnerLocation);
       } else if (!partnerId) {
           // Maybe clear cache if no partnerId? Or just don't load stale data.
@@ -250,11 +280,23 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   }, [partnerId]); // Depend on partnerId
 
   // Fetch user data and location (modified to use partnerId)
-  useEffect(() => {
+   useEffect(() => {
     let userLocationWatcher = null;
     let partnerListenerUnsubscribe = () => {};
 
     const fetchAndWatchUserData = async () => {
+        const cacheKey = `userData_${user?.uid}`;
+        const cachedUserData = localStorage.getItem(cacheKey);
+        if (cachedUserData) {
+          const { location } = JSON.parse(cachedUserData);
+          if(location){
+              setUserLocation(location)
+          }
+          setIsUserDataCached(true);
+          return;
+        }
+
+
       if (!user) return;
 
       const userDocRef = doc(db, 'users', user.uid);
@@ -269,6 +311,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
               timestamp: Date.now() // Add timestamp
             };
             setUserLocation(newLocation);
+            localStorage.setItem(cacheKey, JSON.stringify({ location: newLocation}));
             localStorage.setItem('userLocation', JSON.stringify(newLocation));
             try {
               await updateDoc(userDocRef, { location: newLocation });
@@ -297,12 +340,12 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
           if (docSnap.exists()) {
             const partnerData = docSnap.data();
             // Update partner state only if needed (e.g., name change)
-            // setPartner(prev => ({ ...prev, ...partnerData })); // Careful with overwrites
+            setPartner(prev => ({ ...prev, ...partnerData })); // Careful with overwrites
             if (partnerData.location) {
               setPartnerLocation(partnerData.location);
               // Update cache if needed
               localStorage.setItem('partnerData', JSON.stringify({
-                partner: partnerData, // Cache full partner data
+                partner: { ...partnerData, uid: partnerId}, // Cache full partner data
                 partnerLocation: partnerData.location,
               }));
             } else {
@@ -334,7 +377,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
       }
       partnerListenerUnsubscribe(); // Unsubscribe from partner listener
     };
-  }, [user, partnerId, showMap]); // Dependencies
+  }, [user, partnerId, showMap, isUserDataCached]); // Dependencies
 
   // Calculate distance (keep as is, but handle null locations better)
   useEffect(() => {
@@ -398,6 +441,16 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
     return null; // Return null if map shouldn't be shown or locations are invalid
   }, [showMap, userLocation, partnerLocation, partner?.name]); // Include partner.name in dependencies
 
+  const playSong = () => {
+    setCurrentTrack("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+    setIsPlaying(true);
+  }
+
+  const changeTrack = () => {
+    const randomIndex = Math.floor(Math.random() * songs.length);
+    setCurrentTrack(songs[randomIndex]);
+    setIsPlaying(true);
+  }
 
   return (
     <div className="HomePage">
@@ -495,6 +548,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', color: 'white' }}>
             <LocationOnIcon sx={{ mr: 1, fontSize: '1.2rem', opacity: 0.8, color: '#fff23c' }} />
+          
             Share Location
           </Typography>
           <Box display="flex" alignItems="center">
@@ -503,6 +557,8 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
                     {distance} apart
                 </Typography>
              )}
+             
+         
   <Switch
             className="location-switch" // Add a specific class name
             checked={showMap}

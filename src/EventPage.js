@@ -118,19 +118,23 @@ function EventPage({ onBack }) {
       </div>
 
       <form className="event-form" onSubmit={handleAddEvent}>
-        <input
-          type="text"
-          
-          placeholder="Event description"
+        <textarea
+          className="event-description-input"
+          placeholder="Describe the event"
           value={eventText}
           onChange={(e) => setEventText(e.target.value)}
           maxLength={100}
-        />
+        ></textarea>
         <input
+          className="event-date-input"
           type="date"
+          placeholder="Select date"
           value={eventDate}
           onChange={(e) => setEventDate(e.target.value)}
         />
+        
+        
+        
         <button type="submit" className="btn">Add Event</button>
       </form>
 

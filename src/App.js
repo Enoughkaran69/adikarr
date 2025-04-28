@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import SplashScreen from './SplashScreen';
 import LoginPage from './LoginPage';
@@ -9,15 +9,19 @@ import EventPage from './EventPage';
 import ChatPage from './ChatPage';
 import { auth } from './firebase';
 import './App.css';
+import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 
 import { SharedDataProvider } from './contexts/SharedDataContext';
+import { MusicProvider } from './contexts/MusicContext';
 
 function AppWrapper() {
   return (
     <Router>
+      <MusicProvider>
       <SharedDataProvider>
         <App />
       </SharedDataProvider>
+      </MusicProvider>
     </Router>
   );
 }
@@ -86,6 +90,7 @@ function App() {
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <GlobalAudioPlayer />
     </div>
   );
 }

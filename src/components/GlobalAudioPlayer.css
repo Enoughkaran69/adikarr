@@ -1,0 +1,103 @@
+/* src/components/GlobalAudioPlayer.css */
+
+.global-audio-player {
+    position: fixed !important; /* Stick to bottom */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 8px 15px !important; /* Use !important carefully if needed */
+    background-color: rgba(25, 25, 25, 0.9) !important; /* Dark background */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff !important;
+    z-index: 1500 !important; /* Ensure it's above most other content */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 15px;
+  }
+  
+  .player-thumbnail {
+    width: 45px;
+    height: 45px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  
+  .player-info {
+    flex: 1; /* Take up space but allow shrinking */
+    min-width: 80px; /* Prevent excessive shrinking */
+    overflow: hidden; /* Needed for text ellipsis */
+    text-align: left;
+  }
+  
+  .player-title {
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #fff !important;
+  }
+  
+  .player-artist {
+    font-size: 0.75rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+  
+  .player-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the play/pause */
+    flex-shrink: 0;
+  }
+  
+  .player-controls .MuiIconButton-root {
+      color: #fff !important;
+  }
+  
+  .player-progress {
+    flex: 2; /* Give progress bar more space */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 150px; /* Ensure progress bar has reasonable minimum width */
+  }
+  
+  .time-display {
+    font-size: 0.7rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    min-width: 35px; /* Space for M:SS */
+    text-align: center;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .global-audio-player {
+      gap: 8px;
+      padding: 6px 10px !important;
+    }
+    .player-thumbnail {
+      width: 40px;
+      height: 40px;
+    }
+    .player-info {
+        min-width: 60px;
+    }
+    .player-title {
+        font-size: 0.8rem !important;
+    }
+     .player-artist {
+        font-size: 0.7rem !important;
+    }
+    .player-progress {
+        min-width: 100px;
+        gap: 6px;
+    }
+    .player-controls .MuiIconButton-root {
+        padding: 6px !important;
+    }
+    .player-controls .MuiSvgIcon-root { /* Target icon size */
+        font-size: 2rem !important;
+    }
+  }
+  
