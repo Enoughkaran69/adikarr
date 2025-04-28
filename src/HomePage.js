@@ -124,8 +124,6 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   const [error, setError] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [showMap, setShowMap] = useState(false);
-  const [isPartnerDataCached, setIsPartnerDataCached] = useState(false);
-  const [isUserDataCached, setIsUserDataCached] = useState(false);
   const [partnerId, setPartnerId] = useState(null);
   const navigate = useNavigate();
 
@@ -137,45 +135,25 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
 
   // Fetch partnerId (keep as is)
   useEffect(() => {
-    const fetchPartnerId = async (fromCache = false) => {
+    const fetchPartnerId = async () => {
       const user = auth.currentUser;
       if (!user) return;
-
       try {
-        const cacheKey = `partnerData_${user.uid}`;
-        const cachedPartnerData = localStorage.getItem(cacheKey);
-        if (cachedPartnerData && fromCache) {
-          const { partnerData } = JSON.parse(cachedPartnerData);
-          setPartner(partnerData);
-          setPartnerId(partnerData.uid)
-          setIsPartnerDataCached(true);
-          return;
-        }
-
-        if (!isPartnerDataCached){
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            if (userData.partner) {
-              setPartnerId(userData.partner);
-              // Fetch partner data here as well for profile display
-              const partnerDocRef = doc(db, 'users', userData.partner);
-              const partnerDocSnap = await getDoc(partnerDocRef);
-              if (partnerDocSnap.exists()) {
-                  const data = partnerDocSnap.data()
-                  setPartner(data);
-                  localStorage.setItem(cacheKey, JSON.stringify({partnerData: data}));
-
-              } else {
-                  console.warn("Partner document not found for ID:", userData.partner);
-                  setPartner(null); // Clear partner if doc doesn't exist
-              }
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.partner) {
+            setPartnerId(userData.partner);
+            // Fetch partner data here as well for profile display
+            const partnerDocRef = doc(db, 'users', userData.partner);
+            const partnerDocSnap = await getDoc(partnerDocRef);
+            if (partnerDocSnap.exists()) {
+                setPartner(partnerDocSnap.data());
             } else {
-              setPartnerId(null);
-              setPartner(null); // Clear partner if not set in user doc
+                console.warn("Partner document not found for ID:", userData.partner);
+                setPartner(null); // Clear partner if doc doesn't exist
             }
-
           } else {
             setPartnerId(null);
             setPartner(null); // Clear partner if not set in user doc
@@ -185,14 +163,10 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
         console.error('Error fetching partnerId and data:', error);
         setError("Could not load partner information.");
       }
-      
     };
-    fetchPartnerId(true);
+    fetchPartnerId();
     // Consider adding a listener here if partner changes often without page reload
   }, [user]);
-
-
-
 
 
   // Menu handlers (keep as is)
@@ -270,7 +244,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
       const parsedData = JSON.parse(cachedPartnerData);
       // Only set if partnerId matches the cached partner's uid
       if (partnerId && parsedData.partner?.uid === partnerId) {
-        //setPartner(parsedData.partner);
+        setPartner(parsedData.partner);
         setPartnerLocation(parsedData.partnerLocation);
       } else if (!partnerId) {
           // Maybe clear cache if no partnerId? Or just don't load stale data.
@@ -280,23 +254,11 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
   }, [partnerId]); // Depend on partnerId
 
   // Fetch user data and location (modified to use partnerId)
-   useEffect(() => {
+  useEffect(() => {
     let userLocationWatcher = null;
     let partnerListenerUnsubscribe = () => {};
 
     const fetchAndWatchUserData = async () => {
-        const cacheKey = `userData_${user?.uid}`;
-        const cachedUserData = localStorage.getItem(cacheKey);
-        if (cachedUserData) {
-          const { location } = JSON.parse(cachedUserData);
-          if(location){
-              setUserLocation(location)
-          }
-          setIsUserDataCached(true);
-          return;
-        }
-
-
       if (!user) return;
 
       const userDocRef = doc(db, 'users', user.uid);
@@ -311,7 +273,6 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
               timestamp: Date.now() // Add timestamp
             };
             setUserLocation(newLocation);
-            localStorage.setItem(cacheKey, JSON.stringify({ location: newLocation}));
             localStorage.setItem('userLocation', JSON.stringify(newLocation));
             try {
               await updateDoc(userDocRef, { location: newLocation });
@@ -340,12 +301,12 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
           if (docSnap.exists()) {
             const partnerData = docSnap.data();
             // Update partner state only if needed (e.g., name change)
-            setPartner(prev => ({ ...prev, ...partnerData })); // Careful with overwrites
+            // setPartner(prev => ({ ...prev, ...partnerData })); // Careful with overwrites
             if (partnerData.location) {
               setPartnerLocation(partnerData.location);
               // Update cache if needed
               localStorage.setItem('partnerData', JSON.stringify({
-                partner: { ...partnerData, uid: partnerId}, // Cache full partner data
+                partner: partnerData, // Cache full partner data
                 partnerLocation: partnerData.location,
               }));
             } else {
@@ -377,7 +338,7 @@ function HomePage({ onNavigateToMusicPage, onNavigateToEventPage }) {
       }
       partnerListenerUnsubscribe(); // Unsubscribe from partner listener
     };
-  }, [user, partnerId, showMap, isUserDataCached]); // Dependencies
+  }, [user, partnerId, showMap]); // Dependencies
 
   // Calculate distance (keep as is, but handle null locations better)
   useEffect(() => {
